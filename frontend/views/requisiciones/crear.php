@@ -1,0 +1,229 @@
+<?php
+// Verificar sesión
+session_start();
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../auth/login.php');
+    exit();
+}
+
+require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
+require_once __DIR__ . '/../../../backend/controllers/AuthController.php';
+
+$usuario = $_SESSION['usuario'];
+$requisicionController = new RequisicionController();
+$areas = $requisicionController->obtenerAreas();
+
+// Determinar el área del usuario actual
+$area_usuario = null;
+foreach ($areas as $area) {
+    if ($area['id'] == $usuario['idArea']) {
+        $area_usuario = $area;
+        break;
+    }
+}
+
+$mensaje = '';
+$error = '';
+
+// Procesar envío del formulario
+if ($_POST) {
+    try {
+        $datos = [
+            'id_area' => $_POST['id_area'], // Área seleccionada
+            'descripcion' => $_POST['descripcion'],
+            'requiere_cotizacion' => $_POST['requiere_cotizacion'] ?? 0,
+            'maquina' => $_POST['maquina'] ?? null,
+            'obra_ubicacion' => $_POST['obra_ubicacion'] ?? null
+        ];
+        
+        $id_requisicion = $requisicionController->crearRequisicion($datos, $usuario['id']);
+        
+        if ($id_requisicion) {
+            $mensaje = "✅ Requisición creada exitosamente";
+            // Limpiar formulario
+            $_POST = [];
+        } else {
+            $error = "❌ Error al crear la requisición";
+        }
+    } catch (Exception $e) {
+        $error = "❌ Error: " . $e->getMessage();
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nueva Requisición</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { 
+            color: #2563eb; 
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #374151;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .btn-cancel {
+            background: #6b7280;
+        }
+        .btn-cancel:hover {
+            background: #4b5563;
+        }
+        .mensaje {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .campo-condicional {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Nueva Requisición</h1>
+        
+        <?php if ($mensaje): ?>
+            <div class="mensaje success"><?php echo $mensaje; ?></div>
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+            <div class="mensaje error"><?php echo $error; ?></div>
+        <?php endif; ?>
+
+        <form method="POST" id="formRequisicion">
+            <!-- Información automática -->
+            <div class="form-group">
+                <label>👤 Solicitante</label>
+                <input type="text" value="<?php echo $usuario['cNombre']; ?>" readonly>
+            </div>
+            
+            <!-- Selector de Área para todos los usuarios -->
+            <div class="form-group">
+                <label>🏢 Área Solicitante *</label>
+                <select name="id_area" id="selectArea" required onchange="actualizarCamposPorArea()">
+                    <option value="">-- Seleccionar Área --</option>
+                    <?php foreach ($areas as $area): ?>
+                        <option value="<?php echo $area['id']; ?>" 
+                            <?php echo ($area['id'] == $usuario['idArea']) ? 'selected' : ''; ?>>
+                            <?php echo $area['cNombre']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Campos específicos por área -->
+            <div class="form-group" id="grupo-maquina" style="display: none;">
+                <label>🔧 Máquina Específica *</label>
+                <input type="text" name="maquina" placeholder="Ej: Excavadora CAT 320, Compresor Atlas..." 
+                       value="<?php echo $_POST['maquina'] ?? ''; ?>">
+            </div>
+
+            <div class="form-group">
+                <label>🏗️ Ubicación/Obra *</label>
+                <input type="text" name="obra_ubicacion" value="<?php echo $_POST['obra_ubicacion'] ?? ''; ?>" 
+                       placeholder="Ej: Obra Norte, Planta Principal..." required>
+            </div>
+
+            <div class="form-group">
+                <label>📋 Descripción de la Necesidad *</label>
+                <textarea name="descripcion" placeholder="Describa detalladamente para qué necesita los materiales..." required><?php echo $_POST['descripcion'] ?? ''; ?></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="requiere_cotizacion" value="1" 
+                           <?php echo isset($_POST['requiere_cotizacion']) ? 'checked' : ''; ?>>
+                    ¿Requiere cotización de proveedores?
+                </label>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn">✅ Enviar Requisición</button>
+                <a href="../dashboard/admin.php" class="btn btn-cancel">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function actualizarCamposPorArea() {
+            const selectArea = document.getElementById('selectArea');
+            const areaSeleccionada = selectArea.options[selectArea.selectedIndex].text.toLowerCase();
+            const grupoMaquina = document.getElementById('grupo-maquina');
+            
+            // Mostrar/ocultar campo de máquina según el área seleccionada
+            if (areaSeleccionada.includes('mecánica') || areaSeleccionada.includes('mecanica') || areaSeleccionada.includes('operador')) {
+                grupoMaquina.style.display = 'block';
+                grupoMaquina.querySelector('input').required = true;
+            } else {
+                grupoMaquina.style.display = 'none';
+                grupoMaquina.querySelector('input').required = false;
+                grupoMaquina.querySelector('input').value = ''; // Limpiar valor
+            }
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarCamposPorArea(); // Ejecutar al cargar
+        });
+    </script>
+</body>
+</html>
