@@ -1,0 +1,30 @@
+# Archivos de entorno
+.env
+config.php
+
+# Archivos de sesión
+sess_*
+
+# Logs
+*.log
+
+# Archivos subidos (no subir contenido, solo la estructura)
+/uploads/
+!/uploads/.gitkeep
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# XAMPP
+/xampp/ 
