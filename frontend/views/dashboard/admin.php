@@ -181,10 +181,17 @@ $usuario = $_SESSION['usuario'];
                 <div class="module-title">Reportes</div>
                 <div class="module-desc">Estadísticas y reportes</div>
             </a>
+
+            <a href="../usuarios/invitar.php" class="module-card">
+                <div class="module-icon">👥</div>
+                <div class="module-title">Invitar Usuario</div>
+                <div class="module-desc">Agregar nuevos usuarios al sistema</div>
+            </a>
         </div>
 
         <a href="../auth/logout.php" class="logout">🚪 Cerrar Sesión</a>
     </div>
+            
 
     <script>
         // Cargar estadísticas (puedes implementar esto después)

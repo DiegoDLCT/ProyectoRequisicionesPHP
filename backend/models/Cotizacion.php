@@ -18,10 +18,11 @@ class Cotizacion {
 
     // Crear nueva cotización
     public function crear() {
+        // Usar nombres reales de columnas en la BD
         $query = "INSERT INTO " . $this->table_name . " 
                   SET idRequisicion=:id_requisicion, cProveedor=:proveedor, 
-                      cNumCotizacion=:num_cotizacion, deMonto=:monto,
-                      dFechaCotizacion=:fecha_cotizacion, cArchivoURI=:archivo_uri,
+                      cNumcotizacion=:num_cotizacion, deMonto=:monto,
+                      dFechacotizacion=:fecha_cotizacion, cArchivourl=:archivo_uri,
                       bAprovada=:aprovada";
         
         $stmt = $this->conn->prepare($query);
@@ -33,6 +34,7 @@ class Cotizacion {
         
         $stmt->bindParam(":id_requisicion", $this->idRequisicion);
         $stmt->bindParam(":proveedor", $this->cProveedor);
+        // Mapear propiedad a nombre de columna real
         $stmt->bindParam(":num_cotizacion", $this->cNumCotizacion);
         $stmt->bindParam(":monto", $this->deMonto);
         $stmt->bindParam(":fecha_cotizacion", $this->dFechaCotizacion);
@@ -47,9 +49,11 @@ class Cotizacion {
 
     // Obtener cotizaciones por requisición
     public function obtenerPorRequisicion($id_requisicion) {
-        $query = "SELECT * FROM " . $this->table_name . " 
+        // Alias columnas para devolver claves que esperan las vistas/controllers
+        $query = "SELECT id, idRequisicion, cProveedor, cNumcotizacion AS cNumCotizacion, deMonto, dFechacotizacion AS dFechaCotizacion, cArchivourl AS cArchivoURI, bAprovada 
+                  FROM " . $this->table_name . " 
                   WHERE idRequisicion = :id_requisicion 
-                  ORDER BY dFechaCotizacion DESC";
+                  ORDER BY dFechacotizacion DESC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_requisicion", $id_requisicion);

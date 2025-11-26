@@ -54,5 +54,34 @@ class CotizacionController {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
+    // Obtener requisiciones con cotizaciones para aprobación
+    public function obtenerRequisicionesConCotizaciones() {
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        $query = "SELECT r.*, u.cNombre as solicitante_nombre, a.cNombre as area_nombre,
+        COUNT(c.id) as total_cotizaciones
+        FROM requisiciones r
+        LEFT JOIN usuarios u ON r.idSolicitante = u.id
+        LEFT JOIN areas a ON r.idArea = a.id
+        LEFT JOIN cotizaciones c ON r.id = c.idRequisicion
+        WHERE r.estado = 'cotizado' AND r.lActivo = 1
+        GROUP BY r.id
+        HAVING total_cotizaciones > 0
+        ORDER BY r.dFechaSolicitud DESC";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        
+        $requisiciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Para cada requisición, obtener sus cotizaciones
+    foreach ($requisiciones as &$requisicion) {
+        $requisicion['cotizaciones'] = $this->obtenerCotizacionesRequisicion($requisicion['id']);
+    }
+    
+    return $requisiciones;
+}
 }
 ?>
