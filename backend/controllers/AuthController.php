@@ -12,7 +12,25 @@ class AuthController {
     }
     
     public function login($email, $password) {
-        return $this->usuario->verificarLogin($email, $password);
+        session_start();
+        
+        // Verificar credenciales
+        $usuarioValido = $this->usuario->verificarLogin($email, $password);
+    
+    if ($usuarioValido) {
+        $_SESSION['usuario'] = $usuarioValido;
+        
+        // Redirección basada en rol - RUTAS CORREGIDAS
+        if ($usuarioValido['cPuesto'] == 'jefe_mayor') {
+            header('Location: /ProyectoPHP/frontend/views/dashboard/jefe_mayor.php');
+        } else {
+            header('Location: /ProyectoPHP/frontend/views/dashboard/admin.php');
+        }
+        exit;
+    }
+    
+    return false;
+
     }
     
     public function logout() {

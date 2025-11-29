@@ -34,6 +34,21 @@ class Usuario {
     public function verificarLogin($email, $password) {
         $usuario = $this->buscarPorEmail($email);
         
+        // DEBUG TEMPORAL - INICIO
+        error_log("=== DEBUG LOGIN ===");
+        error_log("Email buscado: " . $email);
+        error_log("Usuario encontrado: " . ($usuario ? 'SÍ' : 'NO'));
+        if ($usuario) {
+            error_log("Nombre: " . $usuario['cNombre']);
+            error_log("Contraseña ingresada: " . $password);
+            error_log("Hash en BD: " . $usuario['cContrasena']);
+            
+            $result = password_verify($password, $usuario['cContrasena']);
+            error_log("password_verify result: " . ($result ? 'TRUE' : 'FALSE'));
+        }
+        error_log("=== FIN DEBUG ===");
+        // DEBUG TEMPORAL - FIN
+        
         if ($usuario && password_verify($password, $usuario['cContrasena'])) {
             return $usuario;
         }
