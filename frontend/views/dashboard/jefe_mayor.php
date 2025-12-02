@@ -6,13 +6,9 @@ if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['cPuesto'] != 'jefe_may
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/controllers/CotizacionController.php';
+require_once __DIR__ . '/../../../backend/config/database.php';
 
 $usuario = $_SESSION['usuario'];
-//$cotizacionController = new CotizacionController();
-
-// SOLUCIÓN - Obtener requisiciones con cotizaciones pendientes (VERSIÓN PDO)
-require_once __DIR__ . '/../../../backend/config/database.php';
 
 function obtenerTodasLasRequisicionesConCotizaciones() {
     $db = (new Database())->getConnection();
@@ -56,17 +52,11 @@ function obtenerTodasLasRequisicionesConCotizaciones() {
         ];
     }
     
-         return $requisiciones;
-        $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
+    return $requisiciones;
 }
-// Procesar aprobación si se envió el formulario
-//if ($_POST && isset($_POST['id_cotizacion_aprobada'])) {
-  //  $resultado = $cotizacionController->aprobarCotizacion($_POST['id_cotizacion_aprobada']);
-    //if ($resultado) {
-      //  header('Location: jefe_mayor.php?mensaje=aprobada');
-        //exit();
-    //}
-//}
+
+// Llamar la función después de definirla
+$requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
 ?>
 <!DOCTYPE html>
 <html>
@@ -264,66 +254,67 @@ function obtenerTodasLasRequisicionesConCotizaciones() {
                     <p><strong>📊 Estado:</strong> <?php echo htmlspecialchars($requisicion['estado']); ?></p>
                     
                     <div class="cotizaciones-list" id="form-<?php echo $requisicion['id']; ?>">
-    <input type="hidden" name="id_requisicion" value="<?php echo $requisicion['id']; ?>">
-    
-    <h4>🏷️ Selecciona la cotización ganadora:</h4>
-    
-    <?php if (empty($requisicion['cotizaciones'])): ?>
-        <p style="color: #6b7280; font-style: italic;">No hay cotizaciones pendientes</p>
-    <?php else: ?>
-        <?php foreach ($requisicion['cotizaciones'] as $cotizacion): ?>
-            <div class="cotizacion-item" 
-                 onclick="seleccionarCotizacion(<?php echo $cotizacion['id']; ?>, <?php echo $requisicion['id']; ?>)">
-                <div class="radio-container">
-                    <input type="radio" 
-                           id="cotizacion-<?php echo $cotizacion['id']; ?>" 
-                           name="id_cotizacion_aprobada_<?php echo $requisicion['id']; ?>" 
-                           value="<?php echo $cotizacion['id']; ?>"
-                           onchange="actualizarSeleccion(<?php echo $requisicion['id']; ?>)">
-                    <label for="cotizacion-<?php echo $cotizacion['id']; ?>" style="cursor: pointer; margin: 0;">
-                        <div class="proveedor">🏢 <?php echo htmlspecialchars($cotizacion['cProveedor']); ?></div>
-                    </label>
-                </div>
-                
-                <p class="monto">💰 $<?php echo number_format($cotizacion['deMonto'], 2); ?> MXN</p>
-                <p>📅 Fecha: <?php echo htmlspecialchars($cotizacion['dFechacotizacion']); ?></p>
-                
-                <?php if ($cotizacion['cNumcotizacion']): ?>
-                    <p>📋 Número: <?php echo htmlspecialchars($cotizacion['cNumcotizacion']); ?></p>
-                <?php endif; ?>
-                
-                <?php if ($cotizacion['cArchivourl']): ?>
-                    <div class="preview-container">
-                        <?php
-                        $extension = strtolower(pathinfo($cotizacion['cArchivourl'], PATHINFO_EXTENSION));
-                        if (in_array($extension, ['pdf'])): 
-                        ?>
-                            <iframe src="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>"></iframe>
-                        <?php elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])): ?>
-                            <img src="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
-                                 alt="Cotización <?php echo htmlspecialchars($cotizacion['cProveedor']); ?>">
+                        <input type="hidden" name="id_requisicion" value="<?php echo $requisicion['id']; ?>">
+                        
+                        <h4>🏷️ Selecciona la cotización ganadora:</h4>
+                        
+                        <?php if (empty($requisicion['cotizaciones'])): ?>
+                            <p style="color: #6b7280; font-style: italic;">No hay cotizaciones pendientes</p>
                         <?php else: ?>
-                            <p>📎 <a href="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
-                                   target="_blank" class="archivo-link">Descargar archivo</a></p>
+                            <?php foreach ($requisicion['cotizaciones'] as $cotizacion): ?>
+                                <div class="cotizacion-item" 
+                                     onclick="seleccionarCotizacion(<?php echo $cotizacion['id']; ?>, <?php echo $requisicion['id']; ?>)">
+                                    <div class="radio-container">
+                                        <input type="radio" 
+                                               id="cotizacion-<?php echo $cotizacion['id']; ?>" 
+                                               name="id_cotizacion_aprobada_<?php echo $requisicion['id']; ?>" 
+                                               value="<?php echo $cotizacion['id']; ?>"
+                                               onchange="actualizarSeleccion(<?php echo $requisicion['id']; ?>)">
+                                        <label for="cotizacion-<?php echo $cotizacion['id']; ?>" style="cursor: pointer; margin: 0;">
+                                            <div class="proveedor">🏢 <?php echo htmlspecialchars($cotizacion['cProveedor']); ?></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <p class="monto">💰 $<?php echo number_format($cotizacion['deMonto'], 2); ?> MXN</p>
+                                    <p>📅 Fecha: <?php echo htmlspecialchars($cotizacion['dFechacotizacion']); ?></p>
+                                    
+                                    <?php if ($cotizacion['cNumcotizacion']): ?>
+                                        <p>📋 Número: <?php echo htmlspecialchars($cotizacion['cNumcotizacion']); ?></p>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($cotizacion['cArchivourl']): ?>
+                                        <div class="preview-container">
+                                            <?php
+                                            $extension = strtolower(pathinfo($cotizacion['cArchivourl'], PATHINFO_EXTENSION));
+                                            if (in_array($extension, ['pdf'])): 
+                                            ?>
+                                                <iframe src="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>"></iframe>
+                                            <?php elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])): ?>
+                                                <img src="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
+                                                     alt="Cotización <?php echo htmlspecialchars($cotizacion['cProveedor']); ?>">
+                                            <?php else: ?>
+                                                <p>📎 <a href="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
+                                                       target="_blank" class="archivo-link">Descargar archivo</a></p>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <p style="color: #ef4444;">⚠️ No hay archivo adjunto</p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                            
+                            <!-- Formulario corregido -->
+                            <form method="POST" action="/ProyectoPHP/backend/services/aprobar_service.php" style="margin-top: 20px; text-align: center;">
+                                <input type="hidden" name="id_cotizacion_aprobada" id="hidden-cotizacion-<?php echo $requisicion['id']; ?>">
+                                <button type="submit" class="btn btn-success" id="btn-aprobar-<?php echo $requisicion['id']; ?>" disabled>
+                                    ✅ Aprobar Cotización Seleccionada
+                                </button>
+                                <p id="mensaje-seleccion-<?php echo $requisicion['id']; ?>" class="mensaje-seleccion">
+                                    👆 Selecciona una cotización para habilitar la aprobación
+                                </p>
+                            </form>
                         <?php endif; ?>
                     </div>
-                <?php else: ?>
-                    <p style="color: #ef4444;">⚠️ No hay archivo adjunto</p>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-        
-        <form method="POST" action=""/ProyectoPHP/backend/services/aprobar_service.php" style="margin-top: 20px; text-align: center;">
-            <input type="hidden" name="id_cotizacion_aprobada" id="hidden-cotizacion-<?php echo $requisicion['id']; ?>">
-            <button type="submit" class="btn btn-success" id="btn-aprobar-<?php echo $requisicion['id']; ?>" disabled>
-                ✅ Aprobar Cotización Seleccionada
-            </button>
-            <p id="mensaje-seleccion-<?php echo $requisicion['id']; ?>" class="mensaje-seleccion">
-                👆 Selecciona una cotización para habilitar la aprobación
-            </p>
-        </form>
-    <?php endif; ?>
-</div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -331,60 +322,60 @@ function obtenerTodasLasRequisicionesConCotizaciones() {
         <a href="../auth/logout.php" class="logout">🚪 Cerrar Sesión</a>
     </div>
 
-<script>
-    function seleccionarCotizacion(cotizacionId, requisicionId) {
-        const radio = document.getElementById('cotizacion-' + cotizacionId);
-        if (radio && !radio.disabled) {
-            radio.checked = true;
-            actualizarSeleccion(requisicionId);
+    <script>
+        function seleccionarCotizacion(cotizacionId, requisicionId) {
+            const radio = document.getElementById('cotizacion-' + cotizacionId);
+            if (radio && !radio.disabled) {
+                radio.checked = true;
+                actualizarSeleccion(requisicionId);
+            }
         }
-    }
 
-    function actualizarSeleccion(requisicionId) {
-        const form = document.getElementById('form-' + requisicionId);
-        if (!form) return;
-        
-        const radio = form.querySelector('input[name="id_cotizacion_aprobada_' + requisicionId + '"]:checked');
-        const btn = document.getElementById('btn-aprobar-' + requisicionId);
-        const mensaje = document.getElementById('mensaje-seleccion-' + requisicionId);
-        const hiddenInput = document.getElementById('hidden-cotizacion-' + requisicionId);
-        
-        // Actualizar hidden input y botón
-        if (radio && hiddenInput) {
-            hiddenInput.value = radio.value;
-            btn.disabled = false;
-        } else {
-            btn.disabled = true;
-        }
-        
-        // Actualizar mensaje
-        if (mensaje) {
-            if (radio) {
-                mensaje.textContent = '✅ Listo para aprobar la cotización seleccionada';
-                mensaje.classList.add('activo');
+        function actualizarSeleccion(requisicionId) {
+            const form = document.getElementById('form-' + requisicionId);
+            if (!form) return;
+            
+            const radio = form.querySelector('input[name="id_cotizacion_aprobada_' + requisicionId + '"]:checked');
+            const btn = document.getElementById('btn-aprobar-' + requisicionId);
+            const mensaje = document.getElementById('mensaje-seleccion-' + requisicionId);
+            const hiddenInput = document.getElementById('hidden-cotizacion-' + requisicionId);
+            
+            // Actualizar hidden input y botón
+            if (radio && hiddenInput) {
+                hiddenInput.value = radio.value;
+                btn.disabled = false;
             } else {
-                mensaje.textContent = '👆 Selecciona una cotización para habilitar la aprobación';
-                mensaje.classList.remove('activo');
+                btn.disabled = true;
             }
+            
+            // Actualizar mensaje
+            if (mensaje) {
+                if (radio) {
+                    mensaje.textContent = '✅ Listo para aprobar la cotización seleccionada';
+                    mensaje.classList.add('activo');
+                } else {
+                    mensaje.textContent = '👆 Selecciona una cotización para habilitar la aprobación';
+                    mensaje.classList.remove('activo');
+                }
+            }
+            
+            // Actualizar estilos visuales
+            const items = form.querySelectorAll('.cotizacion-item');
+            items.forEach(item => {
+                item.classList.remove('cotizacion-seleccionada');
+                const radioInItem = item.querySelector('input[type="radio"]');
+                if (radioInItem && radioInItem.checked) {
+                    item.classList.add('cotizacion-seleccionada');
+                }
+            });
         }
         
-        // Actualizar estilos visuales
-        const items = form.querySelectorAll('.cotizacion-item');
-        items.forEach(item => {
-            item.classList.remove('cotizacion-seleccionada');
-            const radioInItem = item.querySelector('input[type="radio"]');
-            if (radioInItem && radioInItem.checked) {
-                item.classList.add('cotizacion-seleccionada');
-            }
+        // Inicializar estado de los formularios
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php foreach ($requisicionesConCotizaciones as $requisicion): ?>
+                actualizarSeleccion(<?php echo $requisicion['id']; ?>);
+            <?php endforeach; ?>
         });
-    }
-    
-    // Inicializar estado de los formularios
-    document.addEventListener('DOMContentLoaded', function() {
-        <?php foreach ($requisicionesConCotizaciones as $requisicion): ?>
-            actualizarSeleccion(<?php echo $requisicion['id']; ?>);
-        <?php endforeach; ?>
-    });
-</script>   
+    </script>   
 </body>
 </html>

@@ -4,12 +4,7 @@ function tieneRol($rolRequerido) {
         return false;
     }
     
-    // Para jefe_mayor, verificar el puesto
-    if ($rolRequerido === 'jefe_mayor') {
-        return $_SESSION['usuario']['cPuesto'] === 'jefe_mayor';
-    }
-    
-    // Para admin u otros roles
-    return true;
+    // Verificar que el puesto del usuario coincida con el rol requerido
+    return $_SESSION['usuario']['cPuesto'] === $rolRequerido;
 }
 ?>

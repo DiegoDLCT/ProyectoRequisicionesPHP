@@ -16,15 +16,25 @@ class RequisicionController {
     
     // Crear nueva requisición
     public function crearRequisicion($datos, $id_usuario) {
-        $this->requisicion->idSolicitante = $id_usuario;
-        $this->requisicion->idArea = $datos['id_area'];
-        $this->requisicion->cDescripcion = $datos['descripcion'];
-        $this->requisicion->bRequiereCotizacion = $datos['requiere_cotizacion'] ?? 0;
-        $this->requisicion->cMaquina = $datos['maquina'] ?? null;
-        $this->requisicion->cObraUbicacion = $datos['obra_ubicacion'] ?? null;
-        
-        return $this->requisicion->crear();
+    $this->requisicion->idSolicitante = $id_usuario;
+    $this->requisicion->idArea = $datos['id_area'];
+    $this->requisicion->cDescripcion = $datos['descripcion'];
+    $this->requisicion->bRequiereCotizacion = $datos['requiere_cotizacion'] ?? 0;
+    $this->requisicion->cMaquina = $datos['maquina'] ?? null;
+    $this->requisicion->cObraUbicacion = $datos['obra_ubicacion'] ?? null;
+    
+    // Establecer el estado según si requiere cotización
+    if (isset($datos['requiere_cotizacion']) && $datos['requiere_cotizacion'] == 1) {
+        $this->requisicion->idEstado = 'cotizado'; // O el valor que corresponda en tu sistema
+        // Si usas un ID numérico para estados, podría ser algo como:
+        // $this->requisicion->idEstado = 2; // donde 2 = "cotizado"
+    } else {
+        // Si no requiere cotización, establecer el estado por defecto (ej: "pendiente")
+        $this->requisicion->idEstado = 'pendiente'; // O el valor por defecto de tu sistema
     }
+    
+    return $this->requisicion->crear();
+}
     
     // Obtener áreas para el dropdown
     public function obtenerAreas() {
