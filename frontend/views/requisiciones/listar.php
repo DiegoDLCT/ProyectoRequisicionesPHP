@@ -5,14 +5,20 @@ if (!isset($_SESSION['usuario'])) {
     header('Location: ../auth/login.php');
     exit();
 }
-
-require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
 
 $usuario = $_SESSION['usuario'];
 $requisicionController = new RequisicionController();
 
-// Obtener todas las requisiciones
-$requisiciones = $requisicionController->obtenerTodas();
+// Obtener requisiciones según rol
+if (tieneRol('admin') || tieneRol('jefe_mayor')) {
+    // Admin y jefe mayor ven todo
+    $requisiciones = $requisicionController->obtenerTodas();
+} else {
+    // Usuarios normales y futuros jefe_area ven solo sus propias requisiciones
+    $requisiciones = $requisicionController->obtenerRequisicionesUsuario($usuario['id']);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -103,8 +109,8 @@ $requisiciones = $requisicionController->obtenerTodas();
 <body>
     <div class="container">
         <h1>
-            📋 Lista de Requisiciones
-            <a href="crear.php" class="btn">➕ Nueva Requisición</a>
+            Lista de Requisiciones
+            <a href="crear.php" class="btn">Nueva Requisición</a>
         </h1>
 
         <?php if (empty($requisiciones)): ?>
@@ -138,34 +144,35 @@ $requisiciones = $requisicionController->obtenerTodas();
                             <span class="estado estado-<?php echo $req['estado']; ?>">
                                 <?php 
                                 $estados = [
-                                    'pendiente' => '🟡 Pendiente',
-                                    'cotizado' => '🔵 Cotizado', 
-                                    'aprobado' => '🟢 Aprobado',
-                                    'pagado' => '💰 Pagado',
-                                    'entregado' => '✅ Entregado'
+                                    'pendiente' => 'Pendiente',
+                                    'cotizado' => 'Cotizado', 
+                                    'aprobado' => 'Aprobado',
+                                    'pagado' => 'Pagado',
+                                    'entregado' => 'Entregado'
                                 ];
                                 echo $estados[$req['estado']] ?? $req['estado'];
                                 ?>
                             </span>
                         </td>
                         <td class="acciones">
-                            <a href="ver.php?id=<?php echo $req['id']; ?>" class="ver">👁️ Ver</a>
+                                <a href="ver.php?id=<?php echo $req['id']; ?>" class="ver">Ver</a>
                             <?php if ($req['estado'] == 'pendiente'): ?>
-                                <a href="editar.php?id=<?php echo $req['id']; ?>" class="editar">✏️ Editar</a>
-                                <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">📎 Cotizar</a>
+                                    <a href="ver.php?id=<?php echo $req['id']; ?>" class="editar">Editar</a>
+                                  <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Cotizar</a>
                             <?php endif; ?>
                             <?php if ($req['estado'] == 'cotizado'): ?>
-                                <a href="../cotizaciones/ver.php?id_requisicion=<?php echo $req['id']; ?>" class="ver-cotizaciones">📋 Ver Cotiz.</a>
+                                    <a href="../cotizaciones/pendientes.php?id_requisicion=<?php echo $req['id']; ?>" class="ver-cotizaciones">Ver Cotiz.</a>
                             <?php endif; ?>
                         </td>
 
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
+                    
             </table>
             
             <div style="margin-top: 20px; color: #6b7280; font-size: 14px;">
-                📊 Total: <?php echo count($requisiciones); ?> requisiciones
+                Total: <?php echo count($requisiciones); ?> requisiciones
             </div>
         <?php endif; ?>
         

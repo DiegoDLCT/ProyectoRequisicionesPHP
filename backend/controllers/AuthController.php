@@ -20,11 +20,14 @@ class AuthController {
     if ($usuarioValido) {
         $_SESSION['usuario'] = $usuarioValido;
         
-        // Redirección basada en rol - RUTAS CORREGIDAS
+        // Redirección basada en rol - RUTA DINÁMICA
+        // Obtiene el nombre de la carpeta del proyecto dinámicamente
+        $projectFolder = basename(dirname(dirname(__DIR__)));
+        $baseUrl = '/' . $projectFolder;
         if ($usuarioValido['cPuesto'] == 'jefe_mayor') {
-            header('Location: /ProyectoPHP/frontend/views/dashboard/jefe_mayor.php');
+            header('Location: ' . $baseUrl . '/frontend/views/dashboard/jefe_mayor.php');
         } else {
-            header('Location: /ProyectoPHP/frontend/views/dashboard/admin.php');
+            header('Location: ' . $baseUrl . '/frontend/views/dashboard/admin.php');
         }
         exit;
     }

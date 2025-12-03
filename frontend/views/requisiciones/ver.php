@@ -11,7 +11,7 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
 
 $usuario = $_SESSION['usuario'];
 $requisicionController = new RequisicionController();
@@ -114,17 +114,17 @@ if (!$requisicion) {
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1>📋 Detalle de Requisición</h1>
+                <h1>Detalle de Requisición</h1>
                 <div class="folio">
                     <?php echo $requisicion['cFolio']; ?>
                     <span class="estado-badge estado-<?php echo $requisicion['estado']; ?>">
                         <?php 
                         $estados = [
-                            'pendiente' => '🟡 Pendiente',
-                            'cotizado' => '🔵 Cotizado', 
-                            'aprobado' => '🟢 Aprobado',
-                            'pagado' => '💰 Pagado',
-                            'entregado' => '✅ Entregado'
+                            'pendiente' => 'Pendiente',
+                            'cotizado' => 'Cotizado', 
+                            'aprobado' => 'Aprobado',
+                            'pagado' => 'Pagado',
+                            'entregado' => 'Entregado'
                         ];
                         echo $estados[$requisicion['estado']] ?? $requisicion['estado'];
                         ?>
@@ -132,36 +132,37 @@ if (!$requisicion) {
                 </div>
             </div>
             <div>
-                <a href="listar.php" class="btn btn-secondary">← Volver</a>
+                <a href="../../index.php" class="btn btn-secondary">Volver</a>
                 <?php if ($requisicion['estado'] == 'pendiente'): ?>
-                    <a href="editar.php?id=<?php echo $requisicion['id']; ?>" class="btn">✏️ Editar</a>
+                    <!-- Editar no implementado; volver a la lista en su lugar -->
+                    <a href="listar.php" class="btn">Editar</a>
                 <?php endif; ?>
             </div>
         </div>
 
         <div class="info-grid">
-            <div class="info-card">
-                <div class="info-label">📅 Fecha de Solicitud</div>
+                <div class="info-card">
+                <div class="info-label">Fecha de Solicitud</div>
                 <div class="info-value"><?php echo $requisicion['dFechaSolicitud']; ?></div>
             </div>
             <div class="info-card">
-                <div class="info-label">👤 Solicitante</div>
+                <div class="info-label">Solicitante</div>
                 <div class="info-value"><?php echo $requisicion['solicitante_nombre']; ?></div>
             </div>
             <div class="info-card">
-                <div class="info-label">🏢 Área</div>
+                <div class="info-label">Área</div>
                 <div class="info-value"><?php echo $requisicion['area_nombre']; ?></div>
             </div>
             <div class="info-card">
-                <div class="info-label">💰 Cotización</div>
+                <div class="info-label">Cotización</div>
                 <div class="info-value">
-                    <?php echo $requisicion['bRequiereCotizacion'] ? '✅ Requerida' : '❌ No requerida'; ?>
+                    <?php echo $requisicion['bRequiereCotizacion'] ? 'Requerida' : 'No requerida'; ?>
                 </div>
             </div>
         </div>
 
         <div class="descripcion">
-            <div class="info-label">📋 Descripción</div>
+            <div class="info-label">Descripción</div>
             <div class="info-value"><?php echo nl2br(htmlspecialchars($requisicion['cDescripcion'])); ?></div>
         </div>
 

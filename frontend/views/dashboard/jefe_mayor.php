@@ -6,52 +6,49 @@ if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['cPuesto'] != 'jefe_may
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/config/database.php';
+require_once dirname(__DIR__, 3) . '/backend/config/database.php';
 
 $usuario = $_SESSION['usuario'];
 
 function obtenerTodasLasRequisicionesConCotizaciones() {
     $db = (new Database())->getConnection();
-    
-    $sql = "SELECT 
-                r.id, r.cFolio, r.cDescripcion, r.estado,
-                u.cNombre as solicitante_nombre,
-                a.cNombre as area_nombre
+    $sql = "SELECT r.id, r.cFolio, r.cDescripcion, r.estado, u.cNombre as solicitante_nombre, a.cNombre as area_nombre
             FROM requisiciones r
             JOIN usuarios u ON r.idSolicitante = u.id
             JOIN areas a ON r.idArea = a.id
-            WHERE r.id IN (SELECT DISTINCT idRequisicion FROM cotizaciones WHERE bAprovada = 0)
             ORDER BY r.dFechaSolicitud DESC";
-    
     $stmt = $db->prepare($sql);
     $stmt->execute();
     $requisiciones = [];
-    
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $reqId = $row['id'];
-        
-        // Obtener cotizaciones para esta requisición
-        $sqlCotizaciones = "SELECT 
-                            id, idRequisicion, cProveedor, cNumcotizacion, deMonto, 
-                            dFechacotizacion, cArchivourl, bAprovada 
-                            FROM cotizaciones 
-                            WHERE idRequisicion = ? AND bAprovada = 0
-                            ORDER BY deMonto ASC";
+        // Obtener todas las cotizaciones de la requisición
+        $sqlCotizaciones = "SELECT id, idRequisicion, cProveedor, cNumcotizacion, deMonto, dFechacotizacion, cArchivourl, bAprovada FROM cotizaciones WHERE idRequisicion = ? ORDER BY deMonto ASC";
         $stmtCotizaciones = $db->prepare($sqlCotizaciones);
         $stmtCotizaciones->execute([$reqId]);
         $cotizaciones = $stmtCotizaciones->fetchAll(PDO::FETCH_ASSOC);
-        
-        $requisiciones[] = [
-            'id' => $row['id'],
-            'cFolio' => $row['cFolio'],
-            'cDescripcion' => $row['cDescripcion'],
-            'estado' => $row['estado'],
-            'solicitante_nombre' => $row['solicitante_nombre'],
-            'area_nombre' => $row['area_nombre'],
-            'cotizaciones' => $cotizaciones
-        ];
+        // Validar la regla: solo mostrar si todas las cotizaciones tienen bAprovada = 0
+        if (!empty($cotizaciones)) {
+            $todosCero = true;
+            foreach ($cotizaciones as $cot) {
+                if ($cot['bAprovada'] != 0) {
+                    $todosCero = false;
+                    break;
+                }
+            }
+            if ($todosCero) {
+                $requisiciones[] = [
+                    'id' => $row['id'],
+                    'cFolio' => $row['cFolio'],
+                    'cDescripcion' => $row['cDescripcion'],
+                    'estado' => $row['estado'],
+                    'solicitante_nombre' => $row['solicitante_nombre'],
+                    'area_nombre' => $row['area_nombre'],
+                    'cotizaciones' => $cotizaciones
+                ];
+            }
+        }
     }
-    
     return $requisiciones;
 }
 
@@ -223,40 +220,40 @@ $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
 </head>
 <body>
     <div class="dashboard">
-        <h1>👑 Panel Jefe Mayor</h1>
+        <h1>Panel Jefe Mayor</h1>
         
         <div class="user-info">
-            <strong>👤 Usuario:</strong> <?php echo htmlspecialchars($usuario['cNombre']); ?><br>
-            <strong>📧 Email:</strong> <?php echo htmlspecialchars($usuario['cCorreo']); ?><br>
-            <strong>💼 Puesto:</strong> <?php echo htmlspecialchars($usuario['cPuesto']); ?>
+            <strong>Usuario:</strong> <?php echo htmlspecialchars($usuario['cNombre']); ?><br>
+            <strong>Email:</strong> <?php echo htmlspecialchars($usuario['cCorreo']); ?><br>
+            <strong>Puesto:</strong> <?php echo htmlspecialchars($usuario['cPuesto']); ?>
         </div>
 
         <?php if (isset($_GET['mensaje']) && $_GET['mensaje'] == 'aprobada'): ?>
             <div class="mensaje-exito">
-                ✅ Cotización aprobada exitosamente
+                Cotización aprobada exitosamente
             </div>
         <?php endif; ?>
 
-        <h2>📋 Cotizaciones Pendientes de Aprobación</h2>
+        <h2>Cotizaciones Pendientes de Aprobación</h2>
 
         <?php if (empty($requisicionesConCotizaciones)): ?>
             <div class="empty-state">
-                <h3>✅ No hay cotizaciones pendientes</h3>
+                <h3>No hay cotizaciones pendientes</h3>
                 <p>Todas las cotizaciones han sido aprobadas</p>
             </div>
         <?php else: ?>
             <?php foreach ($requisicionesConCotizaciones as $requisicion): ?>
-                <div class="requisicion-card">
-                    <h3>📄 <?php echo htmlspecialchars($requisicion['cFolio']); ?></h3>
-                    <p><strong>📝 Descripción:</strong> <?php echo htmlspecialchars($requisicion['cDescripcion']); ?></p>
-                    <p><strong>👤 Solicitante:</strong> <?php echo htmlspecialchars($requisicion['solicitante_nombre']); ?></p>
-                    <p><strong>🏢 Área:</strong> <?php echo htmlspecialchars($requisicion['area_nombre']); ?></p>
-                    <p><strong>📊 Estado:</strong> <?php echo htmlspecialchars($requisicion['estado']); ?></p>
+                    <div class="requisicion-card">
+                        <h3><?php echo htmlspecialchars($requisicion['cFolio']); ?></h3>
+                        <p><strong>Descripción:</strong> <?php echo htmlspecialchars($requisicion['cDescripcion']); ?></p>
+                        <p><strong>Solicitante:</strong> <?php echo htmlspecialchars($requisicion['solicitante_nombre']); ?></p>
+                        <p><strong>Área:</strong> <?php echo htmlspecialchars($requisicion['area_nombre']); ?></p>
+                        <p><strong>Estado:</strong> <?php echo htmlspecialchars($requisicion['estado']); ?></p>
                     
                     <div class="cotizaciones-list" id="form-<?php echo $requisicion['id']; ?>">
                         <input type="hidden" name="id_requisicion" value="<?php echo $requisicion['id']; ?>">
                         
-                        <h4>🏷️ Selecciona la cotización ganadora:</h4>
+                        <h4>Selecciona la cotización ganadora:</h4>
                         
                         <?php if (empty($requisicion['cotizaciones'])): ?>
                             <p style="color: #6b7280; font-style: italic;">No hay cotizaciones pendientes</p>
@@ -271,15 +268,15 @@ $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
                                                value="<?php echo $cotizacion['id']; ?>"
                                                onchange="actualizarSeleccion(<?php echo $requisicion['id']; ?>)">
                                         <label for="cotizacion-<?php echo $cotizacion['id']; ?>" style="cursor: pointer; margin: 0;">
-                                            <div class="proveedor">🏢 <?php echo htmlspecialchars($cotizacion['cProveedor']); ?></div>
+                                            <div class="proveedor"><?php echo htmlspecialchars($cotizacion['cProveedor']); ?></div>
                                         </label>
                                     </div>
                                     
-                                    <p class="monto">💰 $<?php echo number_format($cotizacion['deMonto'], 2); ?> MXN</p>
-                                    <p>📅 Fecha: <?php echo htmlspecialchars($cotizacion['dFechacotizacion']); ?></p>
+                                    <p class="monto">$<?php echo number_format($cotizacion['deMonto'], 2); ?> MXN</p>
+                                    <p>Fecha: <?php echo htmlspecialchars($cotizacion['dFechacotizacion']); ?></p>
                                     
                                     <?php if ($cotizacion['cNumcotizacion']): ?>
-                                        <p>📋 Número: <?php echo htmlspecialchars($cotizacion['cNumcotizacion']); ?></p>
+                                        <p>Número: <?php echo htmlspecialchars($cotizacion['cNumcotizacion']); ?></p>
                                     <?php endif; ?>
                                     
                                     <?php if ($cotizacion['cArchivourl']): ?>
@@ -293,24 +290,24 @@ $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
                                                 <img src="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
                                                      alt="Cotización <?php echo htmlspecialchars($cotizacion['cProveedor']); ?>">
                                             <?php else: ?>
-                                                <p>📎 <a href="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
+                                                <p><a href="../../../uploads/cotizaciones/<?php echo htmlspecialchars($cotizacion['cArchivourl']); ?>" 
                                                        target="_blank" class="archivo-link">Descargar archivo</a></p>
                                             <?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <p style="color: #ef4444;">⚠️ No hay archivo adjunto</p>
+                                        <p style="color: #ef4444;">No hay archivo adjunto</p>
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                             
                             <!-- Formulario corregido -->
-                            <form method="POST" action="/ProyectoPHP/backend/services/aprobar_service.php" style="margin-top: 20px; text-align: center;">
+                            <form onsubmit="aprobarCotizacionAjax(event, <?php echo $requisicion['id']; ?>)" style="margin-top: 20px; text-align: center;">
                                 <input type="hidden" name="id_cotizacion_aprobada" id="hidden-cotizacion-<?php echo $requisicion['id']; ?>">
                                 <button type="submit" class="btn btn-success" id="btn-aprobar-<?php echo $requisicion['id']; ?>" disabled>
-                                    ✅ Aprobar Cotización Seleccionada
+                                    Aprobar Cotización Seleccionada
                                 </button>
                                 <p id="mensaje-seleccion-<?php echo $requisicion['id']; ?>" class="mensaje-seleccion">
-                                    👆 Selecciona una cotización para habilitar la aprobación
+                                    Selecciona una cotización para habilitar la aprobación
                                 </p>
                             </form>
                         <?php endif; ?>
@@ -319,10 +316,44 @@ $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
             <?php endforeach; ?>
         <?php endif; ?>
 
-        <a href="../auth/logout.php" class="logout">🚪 Cerrar Sesión</a>
+        <a href="../auth/logout.php" class="logout">Cerrar Sesión</a>
     </div>
 
+
+    <?php
+    // Obtener la carpeta del proyecto de la URL actual
+    $uriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
+    $projectFolder = isset($uriParts[0]) ? $uriParts[0] : '';
+    ?>
+    <div id="success-message" style="display:none; margin: 30px auto; max-width: 600px; background: #d1fae5; color: #065f46; padding: 20px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: bold;"></div>
+
     <script>
+    function aprobarCotizacionAjax(event, requisicionId) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-aprobar-' + requisicionId);
+        const hiddenInput = document.getElementById('hidden-cotizacion-' + requisicionId);
+        if (!hiddenInput.value) return;
+        btn.disabled = true;
+        // Usar la ruta dinámica del proyecto
+        const projectFolder = '<?php echo $projectFolder; ?>';
+        fetch('/' + projectFolder + '/backend/services/aprobar_service.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id_cotizacion_aprobada=' + encodeURIComponent(hiddenInput.value)
+        })
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-message').textContent = 'Cotización aprobada exitosamente';
+            // Quitar la requisición aprobada del DOM
+            const card = btn.closest('.requisicion-card');
+            if (card) card.remove();
+        })
+        .catch(() => {
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-message').textContent = 'Error al aprobar la cotización';
+        });
+    }
         function seleccionarCotizacion(cotizacionId, requisicionId) {
             const radio = document.getElementById('cotizacion-' + cotizacionId);
             if (radio && !radio.disabled) {
@@ -351,10 +382,10 @@ $requisicionesConCotizaciones = obtenerTodasLasRequisicionesConCotizaciones();
             // Actualizar mensaje
             if (mensaje) {
                 if (radio) {
-                    mensaje.textContent = '✅ Listo para aprobar la cotización seleccionada';
+                    mensaje.textContent = 'Listo para aprobar la cotización seleccionada';
                     mensaje.classList.add('activo');
                 } else {
-                    mensaje.textContent = '👆 Selecciona una cotización para habilitar la aprobación';
+                    mensaje.textContent = 'Selecciona una cotización para habilitar la aprobación';
                     mensaje.classList.remove('activo');
                 }
             }

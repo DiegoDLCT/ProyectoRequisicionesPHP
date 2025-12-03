@@ -6,8 +6,8 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
-require_once __DIR__ . '/../../../backend/controllers/AuthController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/AuthController.php';
 
 $usuario = $_SESSION['usuario'];
 $requisicionController = new RequisicionController();
@@ -31,7 +31,7 @@ if ($_POST) {
         $datos = [
             'id_area' => $_POST['id_area'], // Área seleccionada
             'descripcion' => $_POST['descripcion'],
-            'requiere_cotizacion' => $_POST['requiere_cotizacion'] ?? 0,
+            // ...eliminado requiere_cotizacion...
             'maquina' => $_POST['maquina'] ?? null,
             'obra_ubicacion' => $_POST['obra_ubicacion'] ?? null
         ];
@@ -39,14 +39,14 @@ if ($_POST) {
         $id_requisicion = $requisicionController->crearRequisicion($datos, $usuario['id']);
         
         if ($id_requisicion) {
-            $mensaje = "✅ Requisición creada exitosamente";
-            // Limpiar formulario
-            $_POST = [];
+            // Redirigir al dashboard correspondiente (index.php redirige por rol)
+            header('Location: ../../index.php');
+            exit();
         } else {
-            $error = "❌ Error al crear la requisición";
+            $error = "Error al crear la requisición";
         }
     } catch (Exception $e) {
-        $error = "❌ Error: " . $e->getMessage();
+        $error = "Error: " . $e->getMessage();
     }
 }
 ?>
@@ -139,7 +139,7 @@ if ($_POST) {
 </head>
 <body>
     <div class="container">
-        <h1>📝 Nueva Requisición</h1>
+        <h1>Nueva Requisición</h1>
         
         <?php if ($mensaje): ?>
             <div class="mensaje success"><?php echo $mensaje; ?></div>
@@ -152,13 +152,13 @@ if ($_POST) {
         <form method="POST" id="formRequisicion">
             <!-- Información automática -->
             <div class="form-group">
-                <label>👤 Solicitante</label>
+                <label>Solicitante</label>
                 <input type="text" value="<?php echo $usuario['cNombre']; ?>" readonly>
             </div>
             
             <!-- Selector de Área para todos los usuarios -->
             <div class="form-group">
-                <label>🏢 Área Solicitante *</label>
+                <label>Área Solicitante *</label>
                 <select name="id_area" id="selectArea" required onchange="actualizarCamposPorArea()">
                     <option value="">-- Seleccionar Área --</option>
                     <?php foreach ($areas as $area): ?>
@@ -172,33 +172,31 @@ if ($_POST) {
 
             <!-- Campos específicos por área -->
             <div class="form-group" id="grupo-maquina" style="display: none;">
-                <label>🔧 Máquina Específica *</label>
+                <label>Máquina Específica *</label>
                 <input type="text" name="maquina" placeholder="Ej: Excavadora CAT 320, Compresor Atlas..." 
                        value="<?php echo $_POST['maquina'] ?? ''; ?>">
             </div>
 
             <div class="form-group">
-                <label>🏗️ Ubicación/Obra *</label>
+                <label>Ubicación/Obra *</label>
                 <input type="text" name="obra_ubicacion" value="<?php echo $_POST['obra_ubicacion'] ?? ''; ?>" 
                        placeholder="Ej: Obra Norte, Planta Principal..." required>
             </div>
 
             <div class="form-group">
-                <label>📋 Descripción de la Necesidad *</label>
+                <label>Descripción de la Necesidad *</label>
                 <textarea name="descripcion" placeholder="Describa detalladamente para qué necesita los materiales..." required><?php echo $_POST['descripcion'] ?? ''; ?></textarea>
             </div>
 
             <div class="form-group">
                 <label>
-                    <input type="checkbox" name="requiere_cotizacion" value="1" 
-                           <?php echo isset($_POST['requiere_cotizacion']) ? 'checked' : ''; ?>>
-                    ¿Requiere cotización de proveedores?
+                          <!-- Eliminado checkbox de cotización de proveedores -->
                 </label>
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn">✅ Enviar Requisición</button>
-                <a href="../dashboard/admin.php" class="btn btn-cancel">❌ Cancelar</a>
+                <button type="submit" class="btn">Enviar Requisición</button>
+                <a href="../dashboard/admin.php" class="btn btn-cancel">Cancelar</a>
             </div>
         </form>
     </div>

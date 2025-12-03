@@ -6,13 +6,20 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
+// Verificar rol (solo admin puede subir cotizaciones)
+require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
+if (!tieneRol('admin')) {
+    header('Location: ../index.php?error=denegado');
+    exit();
+}
+
 if (!isset($_GET['id_requisicion'])) {
     header('Location: ../requisiciones/listar.php');
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/controllers/CotizacionController.php';
-require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/CotizacionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
 
 $usuario = $_SESSION['usuario'];
 $cotizacionController = new CotizacionController();
@@ -58,13 +65,13 @@ if ($_POST) {
         $id_cotizacion = $cotizacionController->subirCotizacion($datos);
         
         if ($id_cotizacion) {
-            $mensaje = "✅ Cotización subida exitosamente";
+            $mensaje = "Cotización subida exitosamente";
             $_POST = []; // Limpiar formulario
         } else {
-            $error = "❌ Error al subir la cotización";
+            $error = "Error al subir la cotización";
         }
     } catch (Exception $e) {
-        $error = "❌ Error: " . $e->getMessage();
+        $error = "Error: " . $e->getMessage();
     }
 }
 ?>
@@ -152,7 +159,7 @@ if ($_POST) {
 </head>
 <body>
     <div class="container">
-        <h1>📎 Subir Cotización</h1>
+        <h1>Subir Cotización</h1>
         
         <?php if ($mensaje): ?>
             <div class="mensaje success"><?php echo $mensaje; ?></div>
@@ -163,44 +170,44 @@ if ($_POST) {
         <?php endif; ?>
 
         <div class="requisicion-info">
-            <strong>📋 Requisición:</strong> <?php echo $requisicion['cFolio']; ?><br>
-            <strong>📝 Descripción:</strong> <?php echo $requisicion['cDescripcion']; ?><br>
-            <strong>🏢 Área:</strong> <?php echo $requisicion['area_nombre']; ?>
+            <strong>Requisición:</strong> <?php echo $requisicion['cFolio']; ?><br>
+            <strong>Descripción:</strong> <?php echo $requisicion['cDescripcion']; ?><br>
+            <strong>Área:</strong> <?php echo $requisicion['area_nombre']; ?>
         </div>
 
         <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
-                <label>🏢 Proveedor *</label>
+                  <label>Proveedor *</label>
                 <input type="text" name="proveedor" value="<?php echo $_POST['proveedor'] ?? ''; ?>" 
                        placeholder="Nombre del proveedor" required>
             </div>
 
             <div class="form-group">
-                <label>📄 Número de Cotización</label>
+                  <label>Número de Cotización</label>
                 <input type="text" name="num_cotizacion" value="<?php echo $_POST['num_cotizacion'] ?? ''; ?>" 
                        placeholder="Ej: COT-2024-001">
             </div>
 
             <div class="form-group">
-                <label>💰 Monto</label>
+                  <label>Monto</label>
                 <input type="number" name="monto" step="0.01" value="<?php echo $_POST['monto'] ?? ''; ?>" 
                        placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label>📅 Fecha de Cotización</label>
+                <label>Fecha de Cotización</label>
                 <input type="date" name="fecha_cotizacion" value="<?php echo $_POST['fecha_cotizacion'] ?? date('Y-m-d'); ?>">
             </div>
 
             <div class="form-group">
-                <label>📎 Archivo (PDF)</label>
+                <label>Archivo (PDF)</label>
                 <input type="file" name="archivo" accept=".pdf,.PDF">
                 <small style="color: #6b7280;">Formatos aceptados: PDF (Máx. 5MB)</small>
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn">📎 Subir Cotización</button>
-                <a href="../requisiciones/ver.php?id=<?php echo $id_requisicion; ?>" class="btn btn-secondary">❌ Cancelar</a>
+                <button type="submit" class="btn">Subir Cotización</button>
+                <a href="../requisiciones/ver.php?id=<?php echo $id_requisicion; ?>" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>

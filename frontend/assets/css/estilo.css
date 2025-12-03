@@ -1,0 +1,43 @@
+/* Estilos globales para módulos y tarjetas del dashboard */
+.modules-grid, .quick-actions, .modules-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+}
+
+.module-card, .action-card, .card, .module-card {
+	background: #ffffff;
+	border: 1px solid #e6eef8;
+	border-radius: 10px;
+	padding: 18px;
+	text-align: left;
+	transition: all 0.18s ease;
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+.module-card:hover, .action-card:hover, .card:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 10px 20px rgba(16,24,40,0.06);
+}
+
+.module-icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+	background: #eef2ff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	margin-bottom: 10px;
+}
+
+.module-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.module-desc { color: #6b7280; font-size: 13px; }
+
+.welcome-card h2, h1 { margin: 0 0 8px 0; }
+
+.mensaje.error { background: #fff4f4; color: #b91c1c; }
+.mensaje.success { background: #ecfdf5; color: #065f46; }

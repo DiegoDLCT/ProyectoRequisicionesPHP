@@ -6,6 +6,13 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
+require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
+// Sólo admin puede acceder a este dashboard
+if (!tieneRol('admin')) {
+    header('Location: ../index.php?error=denegado');
+    exit();
+}
+
 $usuario = $_SESSION['usuario'];
 ?>
 <!DOCTYPE html>
@@ -115,12 +122,12 @@ $usuario = $_SESSION['usuario'];
 </head>
 <body>
     <div class="dashboard">
-        <h1>🛠️ Panel de Administrador</h1>
+        <h1>Panel de Administrador</h1>
         
         <div class="user-info">
-            <strong>👤 Usuario:</strong> <?php echo $usuario['cNombre']; ?><br>
-            <strong>📧 Email:</strong> <?php echo $usuario['cCorreo']; ?><br>
-            <strong>💼 Puesto:</strong> <?php echo $usuario['cPuesto']; ?>
+            <strong>Usuario:</strong> <?php echo $usuario['cNombre']; ?><br>
+            <strong>Email:</strong> <?php echo $usuario['cCorreo']; ?><br>
+            <strong>Puesto:</strong> <?php echo $usuario['cPuesto']; ?>
         </div>
 
         <!-- Estadísticas rápidas -->
@@ -144,52 +151,52 @@ $usuario = $_SESSION['usuario'];
         </div>
 
         <!-- Módulos del sistema -->
-        <h2>🚀 Módulos del Sistema</h2>
+        <h2>Módulos del Sistema</h2>
         <div class="modules-grid">
             <a href="../requisiciones/crear.php" class="module-card">
-                <div class="module-icon">📝</div>
+                <div class="module-icon"><i class="bi bi-pencil-square"></i></div>
                 <div class="module-title">Nueva Requisición</div>
                 <div class="module-desc">Crear nueva solicitud de materiales</div>
             </a>
             
             <a href="../requisiciones/listar.php" class="module-card">
-                <div class="module-icon">📋</div>
+                <div class="module-icon"><i class="bi bi-card-list"></i></div>
                 <div class="module-title">Ver Requisiciones</div>
                 <div class="module-desc">Lista completa y seguimiento</div>
             </a>
             
             <a href="../cotizaciones/pendientes.php" class="module-card">
-                <div class="module-icon">📎</div>
+                <div class="module-icon"><i class="bi bi-paperclip"></i></div>
                 <div class="module-title">Cotizaciones</div>
                 <div class="module-desc">Gestionar cotizaciones pendientes</div>
             </a>
             
             <a href="../proveedores/listar.php" class="module-card">
-                <div class="module-icon">🏢</div>
+                <div class="module-icon"><i class="bi bi-building"></i></div>
                 <div class="module-title">Proveedores</div>
                 <div class="module-desc">Gestión de proveedores</div>
             </a>
             
             <a href="../usuarios/listar.php" class="module-card">
-                <div class="module-icon">👥</div>
+                <div class="module-icon"><i class="bi bi-people"></i></div>
                 <div class="module-title">Usuarios</div>
                 <div class="module-desc">Gestión de usuarios del sistema</div>
             </a>
             
             <a href="../reportes/generar.php" class="module-card">
-                <div class="module-icon">📊</div>
+                <div class="module-icon"><i class="bi bi-bar-chart"></i></div>
                 <div class="module-title">Reportes</div>
                 <div class="module-desc">Estadísticas y reportes</div>
             </a>
 
             <a href="../usuarios/invitar.php" class="module-card">
-                <div class="module-icon">👥</div>
+                <div class="module-icon"><i class="bi bi-person-plus"></i></div>
                 <div class="module-title">Invitar Usuario</div>
                 <div class="module-desc">Agregar nuevos usuarios al sistema</div>
             </a>
         </div>
 
-        <a href="../auth/logout.php" class="logout">🚪 Cerrar Sesión</a>
+        <a href="../auth/logout.php" class="logout">Cerrar Sesión</a>
     </div>
             
 

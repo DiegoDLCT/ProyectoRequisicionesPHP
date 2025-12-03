@@ -6,8 +6,8 @@ if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['cPuesto'] != 'admin') 
     exit();
 }
 
-require_once __DIR__ . '/../../../backend/controllers/UsuarioController.php';
-require_once __DIR__ . '/../../../backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/UsuarioController.php';
+require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
 
 $usuario = $_SESSION['usuario'];
 $usuarioController = new UsuarioController();
@@ -33,13 +33,13 @@ if ($_POST) {
         $resultado = $usuarioController->invitarUsuario($datos);
         
         if ($resultado) {
-            $mensaje = "✅ Usuario invitado exitosamente. Se ha enviado un correo de invitación.";
+            $mensaje = "Usuario invitado exitosamente. Se ha enviado un correo de invitación.";
             $_POST = []; // Limpiar formulario
         } else {
-            $error = "❌ Error al invitar al usuario";
+            $error = "Error al invitar al usuario";
         }
     } catch (Exception $e) {
-        $error = "❌ Error: " . $e->getMessage();
+        $error = "Error: " . $e->getMessage();
     }
 }
 ?>
@@ -63,7 +63,7 @@ if ($_POST) {
 </head>
 <body>
     <div class="container">
-        <h1>👥 Invitar Nuevo Usuario</h1>
+        <h1>Invitar Nuevo Usuario</h1>
         
         <?php if ($mensaje): ?>
             <div class="mensaje success"><?php echo $mensaje; ?></div>
@@ -75,17 +75,17 @@ if ($_POST) {
 
         <form method="POST">
             <div class="form-group">
-                <label>👤 Nombre Completo *</label>
+                <label>Nombre Completo *</label>
                 <input type="text" name="nombre" value="<?php echo $_POST['nombre'] ?? ''; ?>" required>
             </div>
 
             <div class="form-group">
-                <label>📧 Email *</label>
+                <label>Email *</label>
                 <input type="email" name="email" value="<?php echo $_POST['email'] ?? ''; ?>" required>
             </div>
 
             <div class="form-group">
-                <label>🏢 Área *</label>
+                <label>Área *</label>
                 <select name="id_area" required>
                     <option value="">-- Seleccionar Área --</option>
                     <?php foreach ($areas as $area): ?>
@@ -98,7 +98,7 @@ if ($_POST) {
             </div>
 
             <div class="form-group">
-                <label>💼 Puesto *</label>
+                <label>Puesto *</label>
                 <select name="puesto" required>
                     <option value="">-- Seleccionar Puesto --</option>
                     <option value="jefe_area" <?php echo isset($_POST['puesto']) && $_POST['puesto'] == 'jefe_area' ? 'selected' : ''; ?>>Jefe de Área</option>
@@ -108,7 +108,7 @@ if ($_POST) {
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn">📧 Enviar Invitación</button>
+                <button type="submit" class="btn">Enviar Invitación</button>
                 <a href="../dashboard/admin.php" style="color: #6b7280; margin-left: 15px;">← Cancelar</a>
             </div>
         </form>
