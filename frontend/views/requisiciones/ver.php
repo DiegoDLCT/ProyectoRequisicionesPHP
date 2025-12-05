@@ -12,6 +12,7 @@ if (!isset($_GET['id'])) {
 }
 
 require_once dirname(__DIR__, 3) . '/backend/controllers/RequisicionController.php';
+require_once dirname(__DIR__, 3) . '/backend/config/routes.php';
 
 $usuario = $_SESSION['usuario'];
 $requisicionController = new RequisicionController();
@@ -194,7 +195,7 @@ if (!$requisicion) {
     function marcarParaSolicitarPago(requisicionId) {
         if (!confirm('¿Estás seguro de marcar esta requisición para solicitar pago?')) return;
         
-        fetch('/ProyectoPHP/backend/services/cambiar_estado.php', {
+        fetch('<?= SERVICES_URL ?>/cambiar_estado.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'id=' + requisicionId + '&estado=solicitar_pago'

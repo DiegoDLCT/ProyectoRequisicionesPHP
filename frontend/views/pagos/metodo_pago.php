@@ -2,6 +2,7 @@
 session_start();
 require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
 require_once dirname(__DIR__, 3) . '/backend/config/database.php';
+require_once dirname(__DIR__, 3) . '/backend/config/routes.php';
 
 if (!isset($_SESSION['usuario'])) {
     header('Location: ../auth/login.php');
@@ -128,7 +129,7 @@ $tipos_pago = $stmt_tipos->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <form method="POST" action="/ProyectoPHP/backend/services/confirmar_pago_service.php">
+        <form method="POST" action="<?= SERVICES_URL ?>/confirmar_pago_service.php">
             <input type="hidden" name="id_requisicion" value="<?= $id_requisicion ?>">
             
             <h2 style="margin-bottom: 20px; font-size: 18px; color: #1d1d1f;">Métodos de Pago Disponibles</h2>

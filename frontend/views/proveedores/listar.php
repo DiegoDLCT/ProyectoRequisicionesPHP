@@ -113,7 +113,7 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
                                     <a href="editar.php?id=<?= $prov['id'] ?>" class="btn btn-sm btn-edit">
                                         <i class="bi bi-pencil"></i> Editar
                                     </a>
-                                    <form method="POST" action="/ProyectoPHP/backend/services/eliminar_proveedor_service.php" style="display: inline;">
+                                    <form method="POST" action="<?= SERVICES_URL ?>/eliminar_proveedor_service.php" style="display: inline;">
                                         <input type="hidden" name="id" value="<?= $prov['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-delete" onclick="return confirm('¿Eliminar este proveedor?')">
                                             <i class="bi bi-trash"></i> Eliminar

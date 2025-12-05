@@ -104,7 +104,7 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
                                     <a href="../requisiciones/ver.php?id=<?= $req['id'] ?>" class="btn btn-sm btn-secondary">
                                         <i class="bi bi-eye"></i> Ver
                                     </a>
-                                    <form method="POST" action="/ProyectoPHP/backend/services/solicitar_pago_service.php" style="display: inline;">
+                                    <form method="POST" action="<?= SERVICES_URL ?>/solicitar_pago_service.php" style="display: inline;">
                                         <input type="hidden" name="id_requisicion" value="<?= $req['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Solicitar pago para esta requisición?')">
                                             <i class="bi bi-cash"></i> Solicitar Pago

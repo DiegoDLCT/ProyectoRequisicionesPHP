@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once dirname(__DIR__, 3) . '/backend/config/database.php';
 require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
 require_once dirname(__DIR__, 3) . '/backend/controllers/AprobacionController.php';
+require_once dirname(__DIR__, 3) . '/backend/config/routes.php';
 
 if (!tieneRol('jefe_mayor') && !tieneRol('admin')) {
     header("Location: ../auth/login.php");
@@ -200,7 +201,7 @@ $requisiciones = $aprobacionController->obtenerAprobacionesPendientes();
         
         btn.disabled = true;
         
-        fetch('/ProyectoPHP/backend/services/aprobar_service.php', {
+        fetch('<?= SERVICES_URL ?>/aprobar_service.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'id_cotizacion_aprobada=' + encodeURIComponent(hiddenInput.value)
