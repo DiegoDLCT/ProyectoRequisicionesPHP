@@ -7,168 +7,180 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 require_once dirname(__DIR__, 3) . '/backend/utils/auth.php';
-// Sólo admin puede acceder a este dashboard
+require_once dirname(__DIR__, 3) . '/backend/config/database.php';
+
+// Solo admin puede acceder a este dashboard
 if (!tieneRol('admin')) {
     header('Location: ../index.php?error=denegado');
     exit();
 }
 
 $usuario = $_SESSION['usuario'];
+
+// Obtener estadísticas
+$db = (new Database())->getConnection();
+$stmt = $db->query("SELECT estado, COUNT(*) as count FROM requisiciones WHERE lActivo = 1 GROUP BY estado");
+$estadisticas = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$pendientes = $estadisticas['pendiente'] ?? 0;
+$cotizadas = $estadisticas['cotizado'] ?? 0;
+$pago_solicitado = $estadisticas['pago_solicitado'] ?? 0;
+$sin_completar = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado <> 'entregado'")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../assets/css/global.css">
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .dashboard {
+        .dashboard-header {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        h1 { 
-            color: #2563eb; 
-            margin-bottom: 20px;
-        }
-        .user-info {
-            background: #f0f9ff;
-            padding: 15px;
-            border-radius: 5px;
+            border-bottom: 1px solid var(--border);
             margin-bottom: 30px;
-            border-left: 4px solid #2563eb;
+            padding: 20px;
+            border-radius: var(--radius-lg);
         }
+
+        .user-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .user-field {
+            font-size: 13px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .user-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
         .modules-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-        .module-card {
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            text-decoration: none;
-            color: #1f2937;
-            border: 2px solid #e5e7eb;
-            transition: all 0.3s ease;
-        }
-        .module-card:hover {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-            transform: translateY(-2px);
-        }
-        .module-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-        .module-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .module-desc {
-            font-size: 14px;
-            color: #6b7280;
-        }
-        .module-card:hover .module-desc {
-            color: #e5e7eb;
-        }
-        .logout {
-            color: #dc2626;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            border: 1px solid #dc2626;
-            border-radius: 5px;
-        }
-        .logout:hover {
-            background: #dc2626;
-            color: white;
-        }
-        .stats {
-            display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 20px;
         }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .logout-btn {
+            display: inline-block;
+            margin-top: 30px;
         }
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-        }
-        .stat-label {
-            font-size: 14px;
-            color: #6b7280;
+
+        @media (max-width: 768px) {
+            .user-card {
+                grid-template-columns: 1fr;
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <h1>Panel de Administrador</h1>
-        
-        <div class="user-info">
-            <strong>Usuario:</strong> <?php echo $usuario['cNombre']; ?><br>
-            <strong>Email:</strong> <?php echo $usuario['cCorreo']; ?><br>
-            <strong>Puesto:</strong> <?php echo $usuario['cPuesto']; ?>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Dashboard Administrador</h1>
+        </div>
+
+        <!-- Información del usuario -->
+        <div class="dashboard-header">
+            <div class="user-card">
+                <div>
+                    <div class="user-field">Usuario</div>
+                    <div class="user-value"><?php echo htmlspecialchars($usuario['cNombre']); ?></div>
+                </div>
+                <div>
+                    <div class="user-field">Email</div>
+                    <div class="user-value"><?php echo htmlspecialchars($usuario['cCorreo']); ?></div>
+                </div>
+                <div>
+                    <div class="user-field">Rol</div>
+                    <div class="user-value"><?php echo htmlspecialchars($usuario['cPuesto']); ?></div>
+                </div>
+            </div>
         </div>
 
         <!-- Estadísticas rápidas -->
-        <div class="stats">
+        <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Estadísticas</h2>
+        <div class="grid grid-4 mb-20">
             <div class="stat-card">
-                <div class="stat-number" id="total-requisiciones">--</div>
-                <div class="stat-label">Total Requisiciones</div>
+                <div class="stat-card-value"><?php echo $sin_completar; ?></div>
+                <div class="stat-card-label">Sin completar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="requisiciones-pendientes">--</div>
-                <div class="stat-label">Pendientes</div>
+                <div class="stat-card-value"><?php echo $pendientes; ?></div>
+                <div class="stat-card-label">Por cotizar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="requisiciones-cotizadas">--</div>
-                <div class="stat-label">En Cotización</div>
+                <div class="stat-card-value"><?php echo $cotizadas; ?></div>
+                <div class="stat-card-label">Cotizadas</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="requisiciones-aprobadas">--</div>
-                <div class="stat-label">Aprobadas</div>
+                <div class="stat-card-value"><?php echo $pago_solicitado; ?></div>
+                <div class="stat-card-label">Pago solicitado</div>
             </div>
         </div>
 
-        <!-- Módulos del sistema -->
-        <h2>Módulos del Sistema</h2>
+        <!-- Módulos del Sistema -->
+        <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Módulos</h2>
         <div class="modules-grid">
             <a href="../requisiciones/crear.php" class="module-card">
-                <div class="module-icon"><i class="bi bi-pencil-square"></i></div>
+                <div class="module-icon"><i class="bi bi-plus-circle"></i></div>
                 <div class="module-title">Nueva Requisición</div>
-                <div class="module-desc">Crear nueva solicitud de materiales</div>
+                <div class="module-desc">Crear solicitud de materiales</div>
             </a>
             
             <a href="../requisiciones/listar.php" class="module-card">
-                <div class="module-icon"><i class="bi bi-card-list"></i></div>
-                <div class="module-title">Ver Requisiciones</div>
-                <div class="module-desc">Lista completa y seguimiento</div>
+                <div class="module-icon"><i class="bi bi-list-check"></i></div>
+                <div class="module-title">Requisiciones</div>
+                <div class="module-desc">Ver todas las requisiciones</div>
             </a>
             
-            <a href="../cotizaciones/pendientes.php" class="module-card">
-                <div class="module-icon"><i class="bi bi-paperclip"></i></div>
-                <div class="module-title">Cotizaciones</div>
-                <div class="module-desc">Gestionar cotizaciones pendientes</div>
+            <a href="../cotizaciones/aprobar.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-check-lg"></i></div>
+                <div class="module-title">Aprobar Cotizaciones</div>
+                <div class="module-desc">Revisar y aprobar cotizaciones</div>
+            </a>
+            
+            <a href="../cotizaciones/seguimiento.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-eye"></i></div>
+                <div class="module-title">Seguimiento de Cotizaciones</div>
+                <div class="module-desc">Todas las cotizaciones activas</div>
+            </a>
+
+            <a href="../pagos/solicitar.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-cash-coin"></i></div>
+                <div class="module-title">Solicitar Pagos</div>
+                <div class="module-desc">Pedir pagos de cotizaciones ganadoras</div>
+            </a>
+            
+            <a href="../pagos/confirmar.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-credit-card"></i></div>
+                <div class="module-title">Confirmar Pagos</div>
+                <div class="module-desc">Verificar y confirmar pagos</div>
+            </a>
+            
+            <a href="../pagos/gestionar_entregas.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-box-seam"></i></div>
+                <div class="module-title">Preparar Entregas</div>
+                <div class="module-desc">Cotizaciones pagadas</div>
+            </a>
+            
+            <a href="../pagos/finalizar_entregas.php" class="module-card">
+                <div class="module-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="module-title">Finalizar Entregas</div>
+                <div class="module-desc">Confirmar entregas</div>
             </a>
             
             <a href="../proveedores/listar.php" class="module-card">
@@ -180,35 +192,11 @@ $usuario = $_SESSION['usuario'];
             <a href="../usuarios/listar.php" class="module-card">
                 <div class="module-icon"><i class="bi bi-people"></i></div>
                 <div class="module-title">Usuarios</div>
-                <div class="module-desc">Gestión de usuarios del sistema</div>
-            </a>
-            
-            <a href="../reportes/generar.php" class="module-card">
-                <div class="module-icon"><i class="bi bi-bar-chart"></i></div>
-                <div class="module-title">Reportes</div>
-                <div class="module-desc">Estadísticas y reportes</div>
-            </a>
-
-            <a href="../usuarios/invitar.php" class="module-card">
-                <div class="module-icon"><i class="bi bi-person-plus"></i></div>
-                <div class="module-title">Invitar Usuario</div>
-                <div class="module-desc">Agregar nuevos usuarios al sistema</div>
+                <div class="module-desc">Gestión de usuarios</div>
             </a>
         </div>
 
-        <a href="../auth/logout.php" class="logout">Cerrar Sesión</a>
+        <a href="../auth/logout.php" class="btn btn-danger logout-btn">Cerrar Sesión</a>
     </div>
-            
-
-    <script>
-        // Cargar estadísticas (puedes implementar esto después)
-        document.addEventListener('DOMContentLoaded', function() {
-            // Por ahora mostramos placeholders
-            document.getElementById('total-requisiciones').textContent = '3';
-            document.getElementById('requisiciones-pendientes').textContent = '1';
-            document.getElementById('requisiciones-cotizadas').textContent = '1';
-            document.getElementById('requisiciones-aprobadas').textContent = '1';
-        });
-    </script>
 </body>
 </html>

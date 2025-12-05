@@ -24,7 +24,17 @@ class CotizacionController {
         $this->cotizacion->cArchivoURI = $datos['archivo_uri'] ?? null;
         $this->cotizacion->bAprovada = 0; // Por defecto no aprobada
         
-        return $this->cotizacion->crear();
+        $resultado = $this->cotizacion->crear();
+        
+        // Si se creó la cotización correctamente, cambiar estado de requisición a 'cotizado'
+        if ($resultado) {
+            $db = (new Database())->getConnection();
+            $sql = "UPDATE requisiciones SET estado = 'cotizado' WHERE id = ? AND estado = 'pendiente'";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$datos['id_requisicion']]);
+        }
+        
+        return $resultado;
     }
     
     // Obtener cotizaciones por requisición

@@ -20,6 +20,11 @@ if (tieneRol('jefe_mayor')) {
     exit();
 }
 
+if (tieneRol('Contaduria')) {
+    header('Location: views/dashboard/contaduria.php');
+    exit();
+}
+
 // Si es jefe de área -> dashboard jefe_area
 if (tieneRol('jefe_area')) {
     header('Location: views/dashboard/jefe_area.php');

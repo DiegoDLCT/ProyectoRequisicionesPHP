@@ -41,21 +41,6 @@ CREATE TABLE `cotizaciones` (
   CONSTRAINT `cotizaciones_ibfk_1` FOREIGN KEY (`idRequisicion`) REFERENCES `requisiciones` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Table: detalle_requisicion
-CREATE TABLE `detalle_requisicion` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `idRequisicion` int(11) NOT NULL,
-  `cArticulo` varchar(150) NOT NULL,
-  `iCantidad` int(11) NOT NULL,
-  `idUnidad` int(11) NOT NULL,
-  `lActivo` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`id`),
-  KEY `idRequisicion` (`idRequisicion`),
-  KEY `idUnidad` (`idUnidad`),
-  CONSTRAINT `detalle_requisicion_ibfk_1` FOREIGN KEY (`idRequisicion`) REFERENCES `requisiciones` (`id`),
-  CONSTRAINT `detalle_requisicion_ibfk_2` FOREIGN KEY (`idUnidad`) REFERENCES `unidades` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Table: requisiciones
 CREATE TABLE `requisiciones` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -80,17 +65,6 @@ CREATE TABLE `tipos_pago` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `CNombre` varchar(50) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Table: transferencias
-CREATE TABLE `transferencias` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `idCompra` int(11) NOT NULL,
-  `dFechaTransferencia` date DEFAULT NULL,
-  `cFolioTransferencia` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idCompra` (`idCompra`),
-  CONSTRAINT `transferencias_ibfk_1` FOREIGN KEY (`idCompra`) REFERENCES `compras` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Table: unidades

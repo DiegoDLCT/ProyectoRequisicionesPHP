@@ -25,5 +25,10 @@ class UsuarioController {
         
         return $this->usuario->crear();
     }
+
+    // Listar usuarios activos
+    public function listarUsuarios() {
+        return $this->usuario->obtenerTodosActivos();
+    }
 }
 ?>

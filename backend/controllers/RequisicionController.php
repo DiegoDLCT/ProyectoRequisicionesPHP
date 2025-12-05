@@ -20,6 +20,7 @@ class RequisicionController {
     $this->requisicion->idArea = $datos['id_area'];
     $this->requisicion->cDescripcion = $datos['descripcion'];
     $this->requisicion->bRequiereCotizacion = $datos['requiere_cotizacion'] ?? 0;
+    $this->requisicion->idUnidad = $datos['id_unidad'] ?? null;
     $this->requisicion->cMaquina = $datos['maquina'] ?? null;
     $this->requisicion->cObraUbicacion = $datos['obra_ubicacion'] ?? null;
     
@@ -51,12 +52,14 @@ class RequisicionController {
         $database = new Database();
         $conn = $database->getConnection();
         
-        $query = "SELECT r.*, u.cNombre as solicitante_nombre, a.cNombre as area_nombre 
+        $query = "SELECT r.*, u.cNombre as solicitante_nombre, a.cNombre as area_nombre,
+                  COALESCE(un.cNombre, 'N/A') as unidad_nombre
                   FROM requisiciones r
                   LEFT JOIN usuarios u ON r.idSolicitante = u.id
                   LEFT JOIN areas a ON r.idArea = a.id
+                  LEFT JOIN unidades un ON r.idUnidad = un.id
                   WHERE r.lActivo = 1
-                  ORDER BY r.dFechaSolicitud DESC";
+                  ORDER BY r.cFolio DESC";
         
         $stmt = $conn->prepare($query);
         $stmt->execute();
@@ -68,10 +71,12 @@ class RequisicionController {
     $database = new Database();
     $conn = $database->getConnection();
     
-    $query = "SELECT r.*, u.cNombre as solicitante_nombre, a.cNombre as area_nombre 
+    $query = "SELECT r.*, u.cNombre as solicitante_nombre, a.cNombre as area_nombre,
+              COALESCE(un.cNombre, 'N/A') as unidad_nombre
               FROM requisiciones r
               LEFT JOIN usuarios u ON r.idSolicitante = u.id
               LEFT JOIN areas a ON r.idArea = a.id
+              LEFT JOIN unidades un ON r.idUnidad = un.id
               WHERE r.id = :id AND r.lActivo = 1";
     
     $stmt = $conn->prepare($query);

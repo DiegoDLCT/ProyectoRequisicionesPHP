@@ -16,11 +16,10 @@ $usuario = $_SESSION['usuario'] ?? null;
                     <a href="../cotizaciones/aprobar.php" style="color:#374151;text-decoration:none;">Aprobar Cotizaciones</a>
                 <?php endif; ?>
                 <?php if (tieneRol('admin')): ?>
-                    <a href="../usuarios/invitar.php" style="color:#374151;text-decoration:none;">Usuarios</a>
+                    <a href="../usuarios/listar.php" style="color:#374151;text-decoration:none;">Usuarios</a>
                 <?php endif; ?>
-            </nav>
-        </div>
-
+             </nav>
+         </div>
         <div style="display:flex;align-items:center;gap:12px;">
             <?php if ($usuario): ?>
                 <div style="text-align:right;">

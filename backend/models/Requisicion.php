@@ -10,6 +10,7 @@ class Requisicion {
     public $idArea;
     public $cDescripcion;
     public $bRequiereCotizacion;
+    public $idUnidad;
     public $cMaquina;
     public $cObraUbicacion;
     public $estado;
@@ -49,7 +50,7 @@ class Requisicion {
                   SET cFolio=:folio, dFechaSolicitud=:fecha_solicitud, 
                       idSolicitante=:id_solicitante, idArea=:id_area,
                       cDescripcion=:descripcion, bRequiereCotizacion=:requiere_cotizacion,
-                      cMaquina=:maquina, cObraUbicacion=:obra_ubicacion, estado=:estado";
+                      idUnidad=:id_unidad, cMaquina=:maquina, cObraUbicacion=:obra_ubicacion, estado=:estado";
         
         $stmt = $this->conn->prepare($query);
         
@@ -64,6 +65,7 @@ class Requisicion {
         $stmt->bindParam(":id_area", $this->idArea);
         $stmt->bindParam(":descripcion", $this->cDescripcion);
         $stmt->bindParam(":requiere_cotizacion", $this->bRequiereCotizacion);
+        $stmt->bindParam(":id_unidad", $this->idUnidad);
         $stmt->bindParam(":maquina", $this->cMaquina);
         $stmt->bindParam(":obra_ubicacion", $this->cObraUbicacion);
         $stmt->bindParam(":estado", $this->estado);
@@ -76,16 +78,65 @@ class Requisicion {
 
     // Obtener requisiciones por usuario
     public function obtenerPorUsuario($id_usuario) {
-        $query = "SELECT r.*, a.cNombre as area_nombre 
+        $query = "SELECT r.*, a.cNombre as area_nombre, u.cNombre as solicitante_nombre,
+                  COALESCE(un.cNombre, 'N/A') as unidad_nombre
                   FROM " . $this->table_name . " r
                   LEFT JOIN areas a ON r.idArea = a.id
+                  LEFT JOIN usuarios u ON r.idSolicitante = u.id
+                  LEFT JOIN unidades un ON r.idUnidad = un.id
                   WHERE r.idSolicitante = :id_usuario AND r.lActivo = 1
-                  ORDER BY r.dFechaSolicitud DESC";
+                  ORDER BY r.cFolio DESC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_usuario", $id_usuario);
         $stmt->execute();
         
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Cambiar estado de requisición
+    public function cambiarEstado($id, $nuevoEstado) {
+        $query = "UPDATE " . $this->table_name . " SET estado = :estado WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $nuevoEstado);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
+    // Obtener requisiciones por estado
+    public function obtenerPorEstado($estado) {
+        $query = "SELECT r.*, 
+                         u.cNombre as solicitante_nombre,
+                         a.cNombreArea as area_nombre
+                  FROM " . $this->table_name . " r
+                  LEFT JOIN usuarios u ON r.idSolicitante = u.id
+                  LEFT JOIN areas a ON r.idArea = a.id
+                  WHERE r.estado = :estado AND r.lActivo = 1
+                  ORDER BY r.dFechaSolicitud DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener requisiciones por estado con cotización aprobada
+    public function obtenerPorEstadoConCotizacion($estado) {
+        $query = "SELECT r.*, 
+                         u.cNombre as solicitante_nombre,
+                         a.cNombre as area_nombre,
+                         c.id as cotizacion_id,
+                         c.cArchivourl as cotizacion_archivo,
+                         c.deMonto as cotizacion_monto,
+                         c.cProveedor as proveedor_nombre
+                  FROM " . $this->table_name . " r
+                  LEFT JOIN usuarios u ON r.idSolicitante = u.id
+                  LEFT JOIN areas a ON r.idArea = a.id
+                  LEFT JOIN cotizaciones c ON r.id = c.idRequisicion AND c.bAprovada = 1
+                  WHERE r.estado = :estado AND r.lActivo = 1
+                  ORDER BY r.dFechaSolicitud DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

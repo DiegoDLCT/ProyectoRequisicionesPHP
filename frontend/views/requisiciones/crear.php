@@ -13,6 +13,12 @@ $usuario = $_SESSION['usuario'];
 $requisicionController = new RequisicionController();
 $areas = $requisicionController->obtenerAreas();
 
+// Obtener unidades disponibles
+$db = new \Database();
+$conn = $db->getConnection();
+$stmt = $conn->query('SELECT * FROM unidades ORDER BY cNombre');
+$unidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Determinar el área del usuario actual
 $area_usuario = null;
 foreach ($areas as $area) {
@@ -31,6 +37,7 @@ if ($_POST) {
         $datos = [
             'id_area' => $_POST['id_area'], // Área seleccionada
             'descripcion' => $_POST['descripcion'],
+            'id_unidad' => $_POST['id_unidad'] ?? null,
             // ...eliminado requiere_cotizacion...
             'maquina' => $_POST['maquina'] ?? null,
             'obra_ubicacion' => $_POST['obra_ubicacion'] ?? null
@@ -39,8 +46,10 @@ if ($_POST) {
         $id_requisicion = $requisicionController->crearRequisicion($datos, $usuario['id']);
         
         if ($id_requisicion) {
-            // Redirigir al dashboard correspondiente (index.php redirige por rol)
-            header('Location: ../../index.php');
+            // Guardar mensaje de éxito en sesión
+            $_SESSION['mensaje_exito'] = "Requisición creada correctamente.";
+            // Redirigir a listar.php para ver la requisición creada
+            header('Location: ./listar.php');
             exit();
         } else {
             $error = "Error al crear la requisición";
@@ -156,18 +165,25 @@ if ($_POST) {
                 <input type="text" value="<?php echo $usuario['cNombre']; ?>" readonly>
             </div>
             
-            <!-- Selector de Área para todos los usuarios -->
+            <!-- Área según rol -->
             <div class="form-group">
                 <label>Área Solicitante *</label>
-                <select name="id_area" id="selectArea" required onchange="actualizarCamposPorArea()">
-                    <option value="">-- Seleccionar Área --</option>
-                    <?php foreach ($areas as $area): ?>
-                        <option value="<?php echo $area['id']; ?>" 
-                            <?php echo ($area['id'] == $usuario['idArea']) ? 'selected' : ''; ?>>
-                            <?php echo $area['cNombre']; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php if ($usuario['cPuesto'] === 'jefe_area' && $area_usuario): ?>
+                    <!-- Jefe de área: área solo lectura -->
+                    <input type="text" value="<?php echo $area_usuario['cNombre']; ?>" readonly>
+                    <input type="hidden" name="id_area" value="<?php echo $usuario['idArea']; ?>">
+                <?php else: ?>
+                    <!-- Admin/otros: selector de área -->
+                    <select name="id_area" id="selectArea" required onchange="actualizarCamposPorArea()">
+                        <option value="">-- Seleccionar Área --</option>
+                        <?php foreach ($areas as $area): ?>
+                            <option value="<?php echo $area['id']; ?>" 
+                                <?php echo ($area['id'] == $usuario['idArea']) ? 'selected' : ''; ?>>
+                                <?php echo $area['cNombre']; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
             </div>
 
             <!-- Campos específicos por área -->
@@ -189,9 +205,16 @@ if ($_POST) {
             </div>
 
             <div class="form-group">
-                <label>
-                          <!-- Eliminado checkbox de cotización de proveedores -->
-                </label>
+                <label>Unidad de Medida *</label>
+                <select name="id_unidad" required>
+                    <option value="">-- Seleccionar Unidad --</option>
+                    <?php foreach ($unidades as $unidad): ?>
+                        <option value="<?php echo $unidad['id']; ?>" 
+                            <?php echo (isset($_POST['id_unidad']) && $_POST['id_unidad'] == $unidad['id']) ? 'selected' : ''; ?>>
+                            <?php echo $unidad['cNombre']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <div class="form-group">

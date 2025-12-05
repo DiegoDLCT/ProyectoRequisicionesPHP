@@ -2,7 +2,7 @@
 // Script pequeño para generar el hash de la contraseña que quieres insertar manualmente.
 // Uso: ejecutar desde la raíz del proyecto con `php generar_hash.php`.
 
-$password = 'jefearea123';
+$password = 'contaduria123';
 $hash = password_hash($password, PASSWORD_DEFAULT);
 
 // Salida en texto plano para copiar fácilmente

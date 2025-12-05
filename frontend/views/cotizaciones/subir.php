@@ -65,8 +65,10 @@ if ($_POST) {
         $id_cotizacion = $cotizacionController->subirCotizacion($datos);
         
         if ($id_cotizacion) {
-            $mensaje = "Cotización subida exitosamente";
-            $_POST = []; // Limpiar formulario
+            $_SESSION['mensaje_exito'] = "Cotización subida correctamente.";
+            // Redirigir a listar requisiciones
+            header('Location: ../requisiciones/listar.php');
+            exit();
         } else {
             $error = "Error al subir la cotización";
         }
@@ -207,7 +209,7 @@ if ($_POST) {
 
             <div class="form-group">
                 <button type="submit" class="btn">Subir Cotización</button>
-                <a href="../requisiciones/ver.php?id=<?php echo $id_requisicion; ?>" class="btn btn-secondary">Cancelar</a>
+                <button type="button" class="btn btn-secondary" onclick="history.back()">Cancelar</button>
             </div>
         </form>
     </div>

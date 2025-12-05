@@ -77,5 +77,17 @@ class Usuario {
         
         return $stmt->execute();
     }
+
+    // Listar usuarios activos
+    public function obtenerTodosActivos() {
+        $query = "SELECT u.*, a.cNombre AS area_nombre
+                  FROM " . $this->table_name . " u
+                  LEFT JOIN areas a ON a.id = u.idArea
+                  WHERE u.lActivo = 1
+                  ORDER BY u.id DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

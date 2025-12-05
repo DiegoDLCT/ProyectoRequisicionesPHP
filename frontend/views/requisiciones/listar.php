@@ -19,11 +19,14 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
     // Usuarios normales y futuros jefe_area ven solo sus propias requisiciones
     $requisiciones = $requisicionController->obtenerRequisicionesUsuario($usuario['id']);
 }
+
+$esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('contaduria');
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Lista de Requisiciones</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -55,9 +58,12 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            transition: all 0.3s ease;
         }
         .btn:hover {
             background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .table {
             width: 100%;
@@ -85,8 +91,11 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
         }
         .estado-pendiente { background: #fef3c7; color: #d97706; }
         .estado-cotizado { background: #dbeafe; color: #1d4ed8; }
+        .estado-solicitar_pago { background: #fed7aa; color: #c2410c; }
         .estado-aprobado { background: #d1fae5; color: #065f46; }
+        .estado-pago_solicitado { background: #e0e7ff; color: #4338ca; }
         .estado-pagado { background: #f3e8ff; color: #7c3aed; }
+        .estado-por_entregar { background: #fed7aa; color: #c2410c; }
         .estado-entregado { background: #dcfce7; color: #166534; }
         .acciones a {
             margin-right: 10px;
@@ -104,14 +113,29 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
             padding: 40px;
             color: #6b7280;
         }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>
             Lista de Requisiciones
-            <a href="crear.php" class="btn">Nueva Requisición</a>
+            <div class="header-buttons">
+                <button id="scrollToTop" class="btn" title="Volver al inicio" style="background: #10b981;">
+                    <i class="bi bi-arrow-left"></i> Atrás
+                </button>
+                <a href="crear.php" class="btn">Nueva Requisición</a>
+            </div>
         </h1>
+
+        <?php if (!empty($_SESSION['mensaje_exito'])): ?>
+            <div style="background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;padding:12px;border-radius:5px;margin-bottom:20px;">
+                <?php echo $_SESSION['mensaje_exito']; unset($_SESSION['mensaje_exito']); ?>
+            </div>
+        <?php endif; ?>
 
         <?php if (empty($requisiciones)): ?>
             <div class="empty-state">
@@ -125,9 +149,9 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
                     <tr>
                         <th>Folio</th>
                         <th>Fecha</th>
-                        <th>Solicitante</th>
-                        <th>Área</th>
+                        <?php if (!$esUsuarioNormal): ?><th>Solicitante</th><?php endif; ?>
                         <th>Ubicación</th>
+                        <th>Unidad</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -137,17 +161,19 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
                     <tr>
                         <td><strong><?php echo $req['cFolio']; ?></strong></td>
                         <td><?php echo $req['dFechaSolicitud']; ?></td>
-                        <td><?php echo $req['solicitante_nombre']; ?></td>
-                        <td><?php echo $req['area_nombre']; ?></td>
+                        <?php if (!$esUsuarioNormal): ?><td><?php echo $req['solicitante_nombre']; ?></td><?php endif; ?>
                         <td><?php echo $req['cObraUbicacion'] ?: '--'; ?></td>
+                        <td><?php echo $req['unidad_nombre'] ?? 'N/A'; ?></td>
                         <td>
                             <span class="estado estado-<?php echo $req['estado']; ?>">
                                 <?php 
                                 $estados = [
-                                    'pendiente' => 'Pendiente',
+                                    'pendiente' => 'Sin Cotizar',
                                     'cotizado' => 'Cotizado', 
-                                    'aprobado' => 'Aprobado',
+                                    'solicitar_pago' => 'Solicitar Pago',
+                                    'pago_solicitado' => 'Pago Solicitado',
                                     'pagado' => 'Pagado',
+                                    'por_entregar' => 'Por Entregar',
                                     'entregado' => 'Entregado'
                                 ];
                                 echo $estados[$req['estado']] ?? $req['estado'];
@@ -155,13 +181,13 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
                             </span>
                         </td>
                         <td class="acciones">
-                                <a href="ver.php?id=<?php echo $req['id']; ?>" class="ver">Ver</a>
+                            <a href="ver.php?id=<?php echo $req['id']; ?>" class="ver">Detalle</a>
                             <?php if ($req['estado'] == 'pendiente'): ?>
-                                    <a href="ver.php?id=<?php echo $req['id']; ?>" class="editar">Editar</a>
-                                  <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Cotizar</a>
+                                <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Cotizar</a>
                             <?php endif; ?>
                             <?php if ($req['estado'] == 'cotizado'): ?>
-                                    <a href="../cotizaciones/pendientes.php?id_requisicion=<?php echo $req['id']; ?>" class="ver-cotizaciones">Ver Cotiz.</a>
+                                <a href="../cotizaciones/seguimiento.php?id_requisicion=<?php echo $req['id']; ?>" class="ver-cotizaciones">Ver Cotiz.</a>
+                                <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Agregar Cotiz.</a>
                             <?php endif; ?>
                         </td>
 
@@ -177,8 +203,15 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
         <?php endif; ?>
         
         <div style="margin-top: 20px;">
-            <a href="../dashboard/admin.php" class="btn" style="background: #6b7280;">← Volver al Dashboard</a>
+            <a href="../../index.php" class="btn" style="background: #6b7280;">← Volver al Dashboard</a>
         </div>
     </div>
+
+    <script>
+        // Botón atrás - volver a página anterior
+        document.getElementById('scrollToTop').addEventListener('click', function() {
+            history.back();
+        });
+    </script>
 </body>
 </html>

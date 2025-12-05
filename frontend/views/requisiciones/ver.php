@@ -60,8 +60,11 @@ if (!$requisicion) {
         }
         .estado-pendiente { background: #fef3c7; color: #d97706; }
         .estado-cotizado { background: #dbeafe; color: #1d4ed8; }
-        .estado-aprobado { background: #d1fae5; color: #065f46; }
+        .estado-solicitar_pago { background: #fed7aa; color: #c2410c; }
+        .estado-pago_solicitado { background: #e0e7ff; color: #4338ca; }
         .estado-pagado { background: #f3e8ff; color: #7c3aed; }
+        .estado-por_entregar { background: #fed7aa; color: #c2410c; }
+        .estado-entregado { background: #dcfce7; color: #166534; }
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -122,8 +125,10 @@ if (!$requisicion) {
                         $estados = [
                             'pendiente' => 'Pendiente',
                             'cotizado' => 'Cotizado', 
-                            'aprobado' => 'Aprobado',
+                            'solicitar_pago' => 'Solicitar Pago',
+                            'pago_solicitado' => 'Pago Solicitado',
                             'pagado' => 'Pagado',
+                            'por_entregar' => 'Por Entregar',
                             'entregado' => 'Entregado'
                         ];
                         echo $estados[$requisicion['estado']] ?? $requisicion['estado'];
@@ -132,10 +137,11 @@ if (!$requisicion) {
                 </div>
             </div>
             <div>
-                <a href="../../index.php" class="btn btn-secondary">Volver</a>
-                <?php if ($requisicion['estado'] == 'pendiente'): ?>
-                    <!-- Editar no implementado; volver a la lista en su lugar -->
-                    <a href="listar.php" class="btn">Editar</a>
+                <button onclick="history.back()" class="btn btn-secondary">Volver</button>
+                <?php if ($requisicion['estado'] == 'pendiente' && !$requisicion['bRequiereCotizacion']): ?>
+                    <button onclick="marcarParaSolicitarPago(<?php echo $requisicion['id']; ?>)" class="btn" style="background: #f59e0b;">
+                        ✓ Marcar para solicitar pago
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
@@ -154,9 +160,19 @@ if (!$requisicion) {
                 <div class="info-value"><?php echo $requisicion['area_nombre']; ?></div>
             </div>
             <div class="info-card">
+                <div class="info-label">Unidad de Medida</div>
+                <div class="info-value"><?php echo $requisicion['unidad_nombre'] ?? 'N/A'; ?></div>
+            </div>
+            <div class="info-card">
                 <div class="info-label">Cotización</div>
                 <div class="info-value">
-                    <?php echo $requisicion['bRequiereCotizacion'] ? 'Requerida' : 'No requerida'; ?>
+                    <?php 
+                    if (in_array($requisicion['estado'], ['cotizado', 'solicitar_pago', 'pago_solicitado', 'pagado', 'por_entregar', 'entregado'])) {
+                        echo 'Requerida y procesada';
+                    } else {
+                        echo $requisicion['bRequiereCotizacion'] ? 'Requerida' : 'No requerida';
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -173,5 +189,28 @@ if (!$requisicion) {
             </small>
         </div>
     </div>
-</body>
-</html>
+
+    <script>
+    function marcarParaSolicitarPago(requisicionId) {
+        if (!confirm('¿Estás seguro de marcar esta requisición para solicitar pago?')) return;
+        
+        fetch('/ProyectoPHP/backend/services/cambiar_estado.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + requisicionId + '&estado=solicitar_pago'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('Requisición marcada para solicitar pago');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'No se pudo actualizar'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al procesar la solicitud');
+        });
+    }
+    </script>

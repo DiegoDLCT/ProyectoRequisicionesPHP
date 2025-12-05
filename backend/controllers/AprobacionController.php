@@ -35,14 +35,14 @@ public function aprobarCotizacion($idCotizacion, $idAprobador) {
         $stmtAprobar->execute([$idAprobador, $idCotizacion]);
         error_log("✅ Cotización aprobada");
         
-        // 3. Actualizar estado de la requisición
-        error_log("3. Actualizando estado de requisición...");
+        // 3. Actualizar estado de la requisición a 'solicitar_pago'
+        error_log("3. Actualizando estado de requisición a solicitar_pago...");
         $sqlRequisicion = "UPDATE requisiciones 
-                          SET estado = 'cotizado' 
+                          SET estado = 'solicitar_pago' 
                           WHERE id = (SELECT idRequisicion FROM cotizaciones WHERE id = ?)";
         $stmtReq = $this->db->prepare($sqlRequisicion);
         $stmtReq->execute([$idCotizacion]);
-        error_log("✅ Estado de requisición actualizado");
+        error_log("✅ Estado de requisición actualizado a solicitar_pago");
         
         $this->db->commit();
         error_log("=== APROBACIÓN EXITOSA ===");
@@ -57,13 +57,14 @@ public function aprobarCotizacion($idCotizacion, $idAprobador) {
     
     public function obtenerAprobacionesPendientes() {
         $sql = "SELECT r.id, r.cFolio, r.cDescripcion, r.estado, u.cNombre as solicitante,
-                       COUNT(c.id) as total_cotizaciones
+                       COUNT(c.id) as total_cotizaciones,
+                       SUM(CASE WHEN c.bAprovada = 0 THEN 1 ELSE 0 END) as cotizaciones_sin_aprobar
                 FROM requisiciones r
                 JOIN usuarios u ON r.idSolicitante = u.id
-                JOIN cotizaciones c ON r.id = c.idRequisicion
-                WHERE c.bAprovada = 0
+                LEFT JOIN cotizaciones c ON r.id = c.idRequisicion
+                WHERE r.estado = 'cotizado'
                 GROUP BY r.id
-                HAVING total_cotizaciones > 0
+                HAVING cotizaciones_sin_aprobar > 0
                 ORDER BY r.dFechaSolicitud DESC";
     
         $stmt = $this->db->prepare($sql);
@@ -78,6 +79,28 @@ public function aprobarCotizacion($idCotizacion, $idAprobador) {
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$idRequisicion]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener cotizaciones no aprobadas por requisición (para mostrar a jefe_mayor/admin)
+    public function obtenerTodasLasRequisicionesConCotizaciones() {
+        $sql = "SELECT r.id, r.cFolio, r.cDescripcion, r.estado, u.cNombre as solicitante_nombre, a.cNombre as area_nombre
+                FROM requisiciones r
+                JOIN usuarios u ON r.idSolicitante = u.id
+                JOIN areas a ON r.idArea = a.id
+                WHERE r.estado = 'cotizado'
+                ORDER BY r.dFechaSolicitud DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $requisiciones = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $reqId = $row['id'];
+            // Obtener cotizaciones sin aprobar de esta requisición
+            $cotizaciones = $this->obtenerCotizacionesPorRequisicion($reqId);
+            if (!empty($cotizaciones)) {
+                $requisiciones[] = array_merge($row, ['cotizaciones' => $cotizaciones]);
+            }
+        }
+        return $requisiciones;
     }
 }
 ?>
