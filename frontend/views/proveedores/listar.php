@@ -113,12 +113,9 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
                                     <a href="editar.php?id=<?= $prov['id'] ?>" class="btn btn-sm btn-edit">
                                         <i class="bi bi-pencil"></i> Editar
                                     </a>
-                                    <form method="POST" action="<?= SERVICES_URL ?>/eliminar_proveedor_service.php" style="display: inline;">
-                                        <input type="hidden" name="id" value="<?= $prov['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-delete" onclick="return confirm('¿Eliminar este proveedor?')">
-                                            <i class="bi bi-trash"></i> Eliminar
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-delete" onclick="abrirModalEliminar(<?= $prov['id'] ?>, '<?= htmlspecialchars($prov['cNombre']) ?>')">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -130,8 +127,89 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
                 <button onclick="history.back()" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver
                 </button>
+                <a href="../../index.php" class="btn" style="background: #2563eb; margin-left: 10px;">
+                    <i class="bi bi-house"></i> Inicio
+                </a>
             </div>
         </div>
     </div>
+
+    <!-- Modal de eliminación -->
+    <div class="modal-overlay" id="modalEliminar" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+            <h2 style="font-size: 20px; color: #1d1d1f; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-exclamation-circle" style="color: #ef4444;"></i> Confirmar Eliminación
+            </h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">¿Deseas eliminar el proveedor <strong id="nombreProveedor"></strong>? Esta acción no se puede deshacer.</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminar()" style="background: #d1d5db; color: #1f2937;">Cancelar</button>
+                <button type="button" class="btn btn-delete" onclick="confirmarEliminacion()" style="background: #ef4444;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let idProveedorAEliminar = null;
+
+        function abrirModalEliminar(id, nombre) {
+            idProveedorAEliminar = id;
+            document.getElementById('nombreProveedor').textContent = nombre;
+            document.getElementById('modalEliminar').style.display = 'flex';
+        }
+
+        function cerrarModalEliminar() {
+            document.getElementById('modalEliminar').style.display = 'none';
+            idProveedorAEliminar = null;
+        }
+
+        function confirmarEliminacion() {
+            if (!idProveedorAEliminar) return;
+
+            const formData = new FormData();
+            formData.append('id', idProveedorAEliminar);
+
+            const btnEliminar = event.target;
+            btnEliminar.disabled = true;
+            btnEliminar.innerHTML = '<i class="bi bi-hourglass-split"></i> Eliminando...';
+
+            fetch('/ProyectoPHP/frontend/services/eliminar_proveedor_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(text => {
+                cerrarModalEliminar();
+                console.log('Respuesta recibida:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        setTimeout(() => { location.reload(); }, 1000);
+                    } else {
+                        alert('Error: ' + data.mensaje);
+                        btnEliminar.disabled = false;
+                        btnEliminar.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                    }
+                } catch (e) {
+                    console.error('Error al parsear JSON:', e);
+                    alert('Error: ' + text.substring(0, 100));
+                    btnEliminar.disabled = false;
+                    btnEliminar.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                }
+            })
+            .catch(error => {
+                cerrarModalEliminar();
+                console.error('Error en fetch:', error);
+                alert('Error en la solicitud: ' + error);
+                btnEliminar.disabled = false;
+                btnEliminar.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+            });
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalEliminar').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalEliminar();
+        });
+    </script>
 </body>
 </html>

@@ -18,8 +18,24 @@ class PagoController {
     }
 
     // Contaduría marca como pagado
-    public function marcarPagado($id_requisicion) {
-        return $this->requisicion->cambiarEstado($id_requisicion, 'pagado');
+    public function marcarPagado($id_requisicion, $metodo_pago = null) {
+        // Primero cambiar estado de la requisición
+        $estadoActualizado = $this->requisicion->cambiarEstado($id_requisicion, 'pagado');
+        
+        if ($estadoActualizado && $metodo_pago) {
+            // Actualizar el método de pago en la cotización aprobada
+            $query = "UPDATE cotizaciones 
+                     SET cMetodoPago = :metodo_pago, dFechaPago = NOW() 
+                     WHERE idRequisicion = :id_requisicion AND bAprovada = 1 
+                     LIMIT 1";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':metodo_pago', $metodo_pago);
+            $stmt->bindParam(':id_requisicion', $id_requisicion);
+            $stmt->execute();
+        }
+        
+        return $estadoActualizado;
     }
 
     // Admin marca como por entregar

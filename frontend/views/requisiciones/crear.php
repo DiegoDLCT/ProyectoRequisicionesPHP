@@ -27,42 +27,15 @@ foreach ($areas as $area) {
         break;
     }
 }
-
-$mensaje = '';
-$error = '';
-
-// Procesar envío del formulario
-if ($_POST) {
-    try {
-        $datos = [
-            'id_area' => $_POST['id_area'], // Área seleccionada
-            'descripcion' => $_POST['descripcion'],
-            'id_unidad' => $_POST['id_unidad'] ?? null,
-            // ...eliminado requiere_cotizacion...
-            'maquina' => $_POST['maquina'] ?? null,
-            'obra_ubicacion' => $_POST['obra_ubicacion'] ?? null
-        ];
-        
-        $id_requisicion = $requisicionController->crearRequisicion($datos, $usuario['id']);
-        
-        if ($id_requisicion) {
-            // Guardar mensaje de éxito en sesión
-            $_SESSION['mensaje_exito'] = "Requisición creada correctamente.";
-            // Redirigir a listar.php para ver la requisición creada
-            header('Location: ./listar.php');
-            exit();
-        } else {
-            $error = "Error al crear la requisición";
-        }
-    } catch (Exception $e) {
-        $error = "Error: " . $e->getMessage();
-    }
-}
 ?>
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva Requisición</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../assets/css/global.css">
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -121,21 +94,6 @@ if ($_POST) {
         .btn-cancel:hover {
             background: #4b5563;
         }
-        .mensaje {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        .error {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
         .campo-condicional {
             display: none;
             animation: fadeIn 0.3s;
@@ -144,21 +102,90 @@ if ($_POST) {
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            animation: slideUp 0.3s;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-content h2 {
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
+        .modal-content p {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .modal-btn-confirm {
+            background: #10b981;
+            color: white;
+        }
+        .modal-btn-confirm:hover {
+            background: #059669;
+        }
+        .modal-btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .modal-btn-cancel:hover {
+            background: #d1d5db;
+        }
+        .loading {
+            display: none;
+            color: #2563eb;
+        }
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Nueva Requisición</h1>
-        
-        <?php if ($mensaje): ?>
-            <div class="mensaje success"><?php echo $mensaje; ?></div>
-        <?php endif; ?>
-        
-        <?php if ($error): ?>
-            <div class="mensaje error"><?php echo $error; ?></div>
-        <?php endif; ?>
 
-        <form method="POST" id="formRequisicion">
+        <form id="formRequisicion" method="POST">
             <!-- Información automática -->
             <div class="form-group">
                 <label>Solicitante</label>
@@ -189,19 +216,17 @@ if ($_POST) {
             <!-- Campos específicos por área -->
             <div class="form-group" id="grupo-maquina" style="display: none;">
                 <label>Máquina Específica *</label>
-                <input type="text" name="maquina" placeholder="Ej: Excavadora CAT 320, Compresor Atlas..." 
-                       value="<?php echo $_POST['maquina'] ?? ''; ?>">
+                <input type="text" name="maquina" placeholder="Ej: Excavadora CAT 320, Compresor Atlas...">
             </div>
 
             <div class="form-group">
                 <label>Ubicación/Obra *</label>
-                <input type="text" name="obra_ubicacion" value="<?php echo $_POST['obra_ubicacion'] ?? ''; ?>" 
-                       placeholder="Ej: Obra Norte, Planta Principal..." required>
+                <input type="text" name="obra_ubicacion" placeholder="Ej: Obra Norte, Planta Principal..." required>
             </div>
 
             <div class="form-group">
                 <label>Descripción de la Necesidad *</label>
-                <textarea name="descripcion" placeholder="Describa detalladamente para qué necesita los materiales..." required><?php echo $_POST['descripcion'] ?? ''; ?></textarea>
+                <textarea name="descripcion" placeholder="Describa detalladamente para qué necesita los materiales..." required></textarea>
             </div>
 
             <div class="form-group">
@@ -209,8 +234,7 @@ if ($_POST) {
                 <select name="id_unidad" required>
                     <option value="">-- Seleccionar Unidad --</option>
                     <?php foreach ($unidades as $unidad): ?>
-                        <option value="<?php echo $unidad['id']; ?>" 
-                            <?php echo (isset($_POST['id_unidad']) && $_POST['id_unidad'] == $unidad['id']) ? 'selected' : ''; ?>>
+                        <option value="<?php echo $unidad['id']; ?>">
                             <?php echo $unidad['cNombre']; ?>
                         </option>
                     <?php endforeach; ?>
@@ -218,32 +242,100 @@ if ($_POST) {
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn">Enviar Requisición</button>
-                <a href="../dashboard/admin.php" class="btn btn-cancel">Cancelar</a>
+                <button type="button" class="btn" onclick="abrirModal()">
+                    <i class="bi bi-check-circle"></i> Enviar Requisición
+                </button>
+                <a href="javascript:history.back()" class="btn btn-cancel">Cancelar</a>
             </div>
         </form>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar Requisición</h2>
+            <p>¿Estás seguro de que deseas enviar esta requisición?</p>
+            <div class="loading" id="loadingSpinner">
+                <i class="bi bi-hourglass-split"></i> Enviando...
+            </div>
+            <div class="modal-buttons" id="modalButtons">
+                <button class="modal-btn modal-btn-confirm" onclick="enviarRequisicion()">
+                    <i class="bi bi-check"></i> Confirmar
+                </button>
+                <button class="modal-btn modal-btn-cancel" onclick="cerrarModal()">
+                    <i class="bi bi-x"></i> Cancelar
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
         function actualizarCamposPorArea() {
             const selectArea = document.getElementById('selectArea');
+            if (!selectArea) return;
+            
             const areaSeleccionada = selectArea.options[selectArea.selectedIndex].text.toLowerCase();
             const grupoMaquina = document.getElementById('grupo-maquina');
             
-            // Mostrar/ocultar campo de máquina según el área seleccionada
             if (areaSeleccionada.includes('mecánica') || areaSeleccionada.includes('mecanica') || areaSeleccionada.includes('operador')) {
                 grupoMaquina.style.display = 'block';
                 grupoMaquina.querySelector('input').required = true;
             } else {
                 grupoMaquina.style.display = 'none';
                 grupoMaquina.querySelector('input').required = false;
-                grupoMaquina.querySelector('input').value = ''; // Limpiar valor
+                grupoMaquina.querySelector('input').value = '';
             }
         }
 
-        // Ejecutar al cargar la página
+        function abrirModal() {
+            const form = document.getElementById('formRequisicion');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function cerrarModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            document.getElementById('modalButtons').style.display = 'flex';
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+
+        function enviarRequisicion() {
+            const form = document.getElementById('formRequisicion');
+            const formData = new FormData(form);
+
+            document.getElementById('modalButtons').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            fetch('/ProyectoPHP/frontend/services/crear_requisicion_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cerrarModal();
+                    alert('¡Requisición creada correctamente!');
+                    setTimeout(() => {
+                        window.location.href = './listar.php';
+                    }, 1500);
+                } else {
+                    cerrarModal();
+                    alert('Error: ' + data.mensaje);
+                    console.error('Error:', data);
+                }
+            })
+            .catch(error => {
+                cerrarModal();
+                alert('Error al enviar la requisición');
+                console.error('Error:', error);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            actualizarCamposPorArea(); // Ejecutar al cargar
+            actualizarCamposPorArea();
         });
     </script>
 </body>

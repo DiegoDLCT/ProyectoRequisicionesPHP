@@ -53,7 +53,8 @@ foreach ($cotizacionesRaw as $cot) {
 </head>
 <body>
     <div class="container">
-        <a href="../../index.php" style="display:inline-block; margin-bottom:20px; padding:10px 20px; background:#2563eb; color:#fff; border-radius:6px; text-decoration:none; font-weight:bold;">Volver</a>
+        <button onclick="window.location.href='../requisiciones/listar.php'" style="display:inline-block; margin-bottom:20px; padding:10px 20px; background:#2563eb; color:#fff; border-radius:6px; border:none; font-weight:bold; cursor:pointer;">← Volver a Requisiciones</button>
+        <a href="../../index.php" class="btn" style="display:inline-block; margin-bottom:20px; margin-left: 10px; padding:10px 20px; background:#2563eb; color:#fff; border-radius:6px; border:none; font-weight:bold; cursor:pointer;"><i class="bi bi-house"></i> Inicio</a>
         <h2>Seguimiento de Cotizaciones</h2>
         <div style="margin-bottom:20px;">
             <label for="gruposPorPagina">Mostrar:</label>
@@ -77,7 +78,7 @@ foreach ($cotizacionesRaw as $cot) {
             let html = '';
             gruposPagina.forEach(grupo => {
                 html += `<h3 style="margin-top:40px; color:#2563eb;">Folio: ${grupo[0].cFolio} | Descripción: ${grupo[0].cDescripcion}</h3>`;
-                html += `<table><thead><tr><th>#</th><th>Proveedor</th><th>Monto</th><th>Estado</th></tr></thead><tbody>`;
+                html += `<table><thead><tr><th>#</th><th>Proveedor</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>`;
                 grupo.forEach((cot, idx) => {
                     const estaAprobada = parseInt(cot.bAprovada) === 1;
                     const estado = estaAprobada ? 'Aprobada' : 'En revisión';
@@ -86,6 +87,7 @@ foreach ($cotizacionesRaw as $cot) {
                         <td>${cot.cProveedor}</td>
                         <td>$${parseFloat(cot.deMonto).toFixed(2)}</td>
                         <td><span class="flag">${estado}</span></td>
+                        <td><a href="subir.php?id_requisicion=${cot.idRequisicion}&id_cotizacion=${cot.id}" style="color:#2563eb; text-decoration:none; font-weight:bold;">Editar</a></td>
                     </tr>`;
                 });
                 html += `</tbody></table>`;

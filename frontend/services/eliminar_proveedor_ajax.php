@@ -8,9 +8,9 @@ header('Content-Type: application/json; charset=utf-8');
 
 session_start();
 require_once __DIR__ . '/../../backend/utils/auth.php';
-require_once __DIR__ . '/../../backend/controllers/PagoController.php';
+require_once __DIR__ . '/../../backend/config/database.php';
 
-// Limpiar buffer y desactivar para evitar problemas
+// Limpiar buffer
 ob_end_clean();
 
 try {
@@ -20,20 +20,25 @@ try {
         exit;
     }
 
-    if (!tieneRol('jefe_mayor') && !tieneRol('admin')) {
+    if (!tieneRol('admin')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'mensaje' => 'No tienes permisos para realizar esta acción.']);
         exit;
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_requisicion'])) {
-        $pagoController = new PagoController();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
+        $id = $_POST['id'];
+        $db = (new Database())->getConnection();
         
-        if ($pagoController->solicitarPago($_POST['id_requisicion'])) {
-            echo json_encode(['success' => true, 'mensaje' => 'Pago solicitado correctamente.']);
+        $query = "DELETE FROM proveedores WHERE id = :id";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'mensaje' => 'Proveedor eliminado correctamente.']);
         } else {
             http_response_code(400);
-            echo json_encode(['success' => false, 'mensaje' => 'Error al solicitar el pago.']);
+            echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el proveedor.']);
         }
     } else {
         http_response_code(400);

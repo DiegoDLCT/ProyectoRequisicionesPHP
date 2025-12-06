@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../../../backend/utils/auth.php';
 require_once __DIR__ . '/../../../backend/controllers/PagoController.php';
+require_once __DIR__ . '/../../../backend/config/routes.php';
 
 if (!isset($_SESSION['usuario'])) {
     header('Location: ../auth/login.php');
@@ -55,6 +56,18 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
         .btn-sm { padding: 8px 16px; font-size: 13px; }
         .btn-success { background: #10b981; }
         .btn-success:hover { background: #059669; }
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 90%; }
+        .modal h2 { font-size: 20px; color: #1d1d1f; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .modal p { color: #6b7280; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-actions .btn { padding: 10px 20px; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-cancel { background: #d1d5db; color: #1f2937; }
+        .btn-cancel:hover { background: #9ca3af; }
     </style>
 </head>
 <body>
@@ -104,12 +117,9 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
                                     <a href="../requisiciones/ver.php?id=<?= $req['id'] ?>" class="btn btn-sm btn-secondary">
                                         <i class="bi bi-eye"></i> Ver
                                     </a>
-                                    <form method="POST" action="<?= SERVICES_URL ?>/solicitar_pago_service.php" style="display: inline;">
-                                        <input type="hidden" name="id_requisicion" value="<?= $req['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Solicitar pago para esta requisición?')">
-                                            <i class="bi bi-cash"></i> Solicitar Pago
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-success" onclick="abrirModalConfirmacion(<?= $req['id'] ?>, '<?= htmlspecialchars($req['cFolio']) ?>')">
+                                        <i class="bi bi-cash"></i> Solicitar Pago
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -118,11 +128,95 @@ unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
             <?php endif; ?>
 
             <div style="margin-top: 20px;">
-                <a href="../../index.php" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                <button onclick="history.back()" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver Atrás
+                </button>
+                <a href="../../index.php" class="btn" style="background: #2563eb; margin-left: 10px;">
+                    <i class="bi bi-house"></i> Inicio
                 </a>
             </div>
         </div>
     </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal-overlay" id="modalConfirmacion">
+        <div class="modal">
+            <h2><i class="bi bi-exclamation-circle"></i> Confirmar Solicitud de Pago</h2>
+            <p>¿Deseas solicitar el pago para la requisición <strong id="folioReq"></strong>?</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarSolicitud()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let idRequisicionSeleccionada = null;
+
+        function abrirModalConfirmacion(id, folio) {
+            idRequisicionSeleccionada = id;
+            document.getElementById('folioReq').textContent = folio;
+            document.getElementById('modalConfirmacion').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalConfirmacion').classList.remove('active');
+            idRequisicionSeleccionada = null;
+        }
+
+        function confirmarSolicitud() {
+            if (!idRequisicionSeleccionada) return;
+
+            const formData = new FormData();
+            formData.append('id_requisicion', idRequisicionSeleccionada);
+
+            fetch('/ProyectoPHP/frontend/services/solicitar_pago_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                cerrarModal();
+                console.log('Respuesta recibida:', text);
+                
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        mostrarMensaje('success', data.mensaje);
+                        setTimeout(() => { location.reload(); }, 1500);
+                    } else {
+                        mostrarMensaje('error', data.mensaje);
+                    }
+                } catch (e) {
+                    console.error('Error al parsear JSON:', e);
+                    console.error('Respuesta:', text);
+                    mostrarMensaje('error', 'Error al procesar la respuesta: ' + text.substring(0, 100));
+                }
+            })
+            .catch(error => {
+                cerrarModal();
+                console.error('Error en fetch:', error);
+                mostrarMensaje('error', 'Error en la solicitud: ' + error);
+            });
+        }
+
+        function mostrarMensaje(tipo, texto) {
+            const container = document.querySelector('.table-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = tipo === 'success' ? 'alert alert-success' : 'alert alert-error';
+            alertDiv.innerHTML = '<i class="bi ' + (tipo === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle') + '"></i> ' + texto;
+            container.parentNode.insertBefore(alertDiv, container);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalConfirmacion').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
 </body>
 </html>

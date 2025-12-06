@@ -41,7 +41,10 @@ $usuarios = $usuarioController->listarUsuarios();
 <div class="page">
     <div class="top-actions">
         <h1>Usuarios</h1>
-        <a class="link" href="../dashboard/admin.php">← Volver al dashboard</a>
+        <div>
+            <a class="link" href="../dashboard/admin.php">← Volver al dashboard</a>
+            <a class="link" href="../../index.php" style="margin-left: 10px;"><i class="bi bi-house"></i> Inicio</a>
+        </div>
     </div>
 
     <?php if (empty($usuarios)): ?>

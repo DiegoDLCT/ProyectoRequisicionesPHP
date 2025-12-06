@@ -17,10 +17,8 @@ $mensaje_error = $_SESSION['mensaje_error'] ?? null;
 unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
 
 // Estadísticas rápidas
-$sin_completar = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado <> 'entregado'")->fetchColumn();
 $pago_solicitado = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado = 'pago_solicitado'")->fetchColumn();
 $pagado = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado = 'pagado'")->fetchColumn();
-$por_entregar = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado = 'por_entregar'")->fetchColumn();
 
 // Folder del proyecto para fetch dinámico
 $uriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
@@ -121,11 +119,7 @@ $projectFolder = $uriParts[0] ?? '';
 
         <!-- Estadísticas -->
         <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Estadísticas</h2>
-        <div class="grid grid-4 mb-20">
-            <div class="stat-card">
-                <div class="stat-card-value"><?php echo $sin_completar; ?></div>
-                <div class="stat-card-label">Sin completar</div>
-            </div>
+        <div class="grid grid-2 mb-20">
             <div class="stat-card">
                 <div class="stat-card-value"><?php echo $pago_solicitado; ?></div>
                 <div class="stat-card-label">Pago solicitado</div>
@@ -133,10 +127,6 @@ $projectFolder = $uriParts[0] ?? '';
             <div class="stat-card">
                 <div class="stat-card-value"><?php echo $pagado; ?></div>
                 <div class="stat-card-label">Pagado</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-value"><?php echo $por_entregar; ?></div>
-                <div class="stat-card-label">Por entregar</div>
             </div>
         </div>
 

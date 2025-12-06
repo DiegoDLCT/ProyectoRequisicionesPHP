@@ -9,6 +9,7 @@ class Cotizacion {
     public $cNumCotizacion;
     public $deMonto;
     public $dFechaCotizacion;
+    public $iDiasEntrega;
     public $cArchivoURI;
     public $bAprovada;
 
@@ -22,8 +23,8 @@ class Cotizacion {
         $query = "INSERT INTO " . $this->table_name . " 
                   SET idRequisicion=:id_requisicion, cProveedor=:proveedor, 
                       cNumcotizacion=:num_cotizacion, deMonto=:monto,
-                      dFechacotizacion=:fecha_cotizacion, cArchivourl=:archivo_uri,
-                      bAprovada=:aprovada";
+                      dFechacotizacion=:fecha_cotizacion, iDiasEntrega=:dias_entrega,
+                      cArchivourl=:archivo_uri, bAprovada=:aprovada";
         
         $stmt = $this->conn->prepare($query);
         
@@ -38,6 +39,7 @@ class Cotizacion {
         $stmt->bindParam(":num_cotizacion", $this->cNumCotizacion);
         $stmt->bindParam(":monto", $this->deMonto);
         $stmt->bindParam(":fecha_cotizacion", $this->dFechaCotizacion);
+        $stmt->bindParam(":dias_entrega", $this->iDiasEntrega);
         $stmt->bindParam(":archivo_uri", $this->cArchivoURI);
         $stmt->bindParam(":aprovada", $this->bAprovada);
         
@@ -50,7 +52,7 @@ class Cotizacion {
     // Obtener cotizaciones por requisición
     public function obtenerPorRequisicion($id_requisicion) {
         // Alias columnas para devolver claves que esperan las vistas/controllers
-        $query = "SELECT id, idRequisicion, cProveedor, cNumcotizacion AS cNumCotizacion, deMonto, dFechacotizacion AS dFechaCotizacion, cArchivourl AS cArchivoURI, bAprovada 
+        $query = "SELECT id, idRequisicion, cProveedor, cNumcotizacion AS cNumCotizacion, deMonto, dFechacotizacion AS dFechaCotizacion, iDiasEntrega, cArchivourl AS cArchivoURI, bAprovada 
                   FROM " . $this->table_name . " 
                   WHERE idRequisicion = :id_requisicion 
                   ORDER BY dFechacotizacion DESC";

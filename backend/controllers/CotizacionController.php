@@ -21,6 +21,7 @@ class CotizacionController {
         $this->cotizacion->cNumCotizacion = $datos['num_cotizacion'] ?? null;
         $this->cotizacion->deMonto = $datos['monto'] ?? null;
         $this->cotizacion->dFechaCotizacion = $datos['fecha_cotizacion'] ?? date('Y-m-d');
+        $this->cotizacion->iDiasEntrega = $datos['dias_entrega'] ?? null;
         $this->cotizacion->cArchivoURI = $datos['archivo_uri'] ?? null;
         $this->cotizacion->bAprovada = 0; // Por defecto no aprobada
         

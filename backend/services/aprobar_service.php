@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cotizacion_aprobad
         exit;
     }
 } else {
-    error_log("❌ DATOS INCOMPLETOS");
-    echo "Datos incompletos";
+    error_log("DATOS INCOMPLETOS");
+    echo "Datos incompletos";;
 }
 ?>

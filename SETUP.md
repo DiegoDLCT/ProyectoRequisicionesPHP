@@ -46,7 +46,7 @@ const DB_NAME = 'requisiciones_db';
 2. Inicia Apache y MySQL en XAMPP
 3. Abre en el navegador: `http://localhost/ProyectoPHP/`
 
-## ✅ Flexibilidad en Nombres de Carpeta
+## Flexibilidad en Nombres de Carpeta
 
 **IMPORTANTE:** El proyecto es completamente flexible con el nombre de la carpeta.
 
@@ -72,9 +72,9 @@ ASSETS_URL     // Archivos CSS, JS
 
 **Ejemplos que funcionan igual:**
 ```
-http://localhost/ProyectoPHP/          ✅
-http://localhost/SistemaRequisiciones/ ✅
-http://localhost/requisiciones/        ✅
+http://localhost/ProyectoPHP/
+http://localhost/SistemaRequisiciones/
+http://localhost/requisiciones/
 ```
 
 Para más detalles, consulta `RUTAS_DINAMICAS.md`
@@ -137,13 +137,13 @@ ProyectoPHP/
 
 ## Características Principales
 
-✅ Gestión completa de requisiciones  
-✅ Sistema de cotizaciones múltiples  
-✅ Control de pagos y entregas  
-✅ Gestión de proveedores  
-✅ Control de usuarios por rol  
-✅ Interfaz minimalista y moderna  
-✅ Responsive design  
+- Gestión completa de requisiciones  
+- Sistema de cotizaciones múltiples  
+- Control de pagos y entregas  
+- Gestión de proveedores  
+- Control de usuarios por rol  
+- Interfaz minimalista y moderna  
+- Responsive design  
 
 ## Solución de Problemas
 
@@ -158,11 +158,10 @@ Asegúrate de tener el rol correcto en la base de datos
 
 ## Desarrollo
 
-Para agregar datos de prueba:
+Para generar hashes de contraseñas:
 
 ```bash
-php scripts/dev/crear_datos_prueba_jefe_mayor.php
-php scripts/dev/crear_datos_prueba_contaduria.php
+php scripts/dev/generar_hash.php
 ```
 
 ## Contacto y Soporte

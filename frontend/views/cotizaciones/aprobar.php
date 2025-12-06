@@ -120,6 +120,7 @@ $requisiciones = $aprobacionController->obtenerAprobacionesPendientes();
                                 <div class="cotizacion-details">
                                     <div><strong>N° Cotización:</strong> <?php echo htmlspecialchars($cotizacion['cNumcotizacion']) ?></div>
                                     <div><strong>Fecha:</strong> <?php echo isset($cotizacion['dFechacotizacion']) ? htmlspecialchars($cotizacion['dFechacotizacion']) : 'N/A' ?></div>
+                                    <div><strong>Entrega:</strong> <?php echo isset($cotizacion['iDiasEntrega']) && $cotizacion['iDiasEntrega'] ? htmlspecialchars($cotizacion['iDiasEntrega']) : 'N/A' ?></div>
                                 </div>
                                 
                                 <div class="preview-container">
@@ -153,8 +154,11 @@ $requisiciones = $aprobacionController->obtenerAprobacionesPendientes();
         <?php endif; ?>
 
         <div style="margin-top: 30px;">
-            <a href="../../index.php" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Volver al Dashboard
+            <button onclick="history.back()" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver Atrás
+            </button>
+            <a href="../../index.php" class="btn" style="background: #2563eb; margin-left: 10px;">
+                <i class="bi bi-house"></i> Inicio
             </a>
         </div>
     </div>

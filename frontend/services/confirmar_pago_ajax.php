@@ -10,7 +10,7 @@ session_start();
 require_once __DIR__ . '/../../backend/utils/auth.php';
 require_once __DIR__ . '/../../backend/controllers/PagoController.php';
 
-// Limpiar buffer y desactivar para evitar problemas
+// Limpiar buffer
 ob_end_clean();
 
 try {
@@ -20,20 +20,30 @@ try {
         exit;
     }
 
-    if (!tieneRol('jefe_mayor') && !tieneRol('admin')) {
+    if (!tieneRol('contaduria')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'mensaje' => 'No tienes permisos para realizar esta acción.']);
         exit;
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_requisicion'])) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_requisicion']) && isset($_POST['id_tipo_pago'])) {
+        $id_requisicion = $_POST['id_requisicion'];
+        $id_tipo_pago = $_POST['id_tipo_pago'];
+        
+        // Mapear el tipo de pago a método de pago
+        $tipos_pago_map = [
+            'Efectivo' => 'efectivo',
+            'Transferencia' => 'transferencia',
+            'Tarjeta de débito' => 'tarjeta'
+        ];
+        
         $pagoController = new PagoController();
         
-        if ($pagoController->solicitarPago($_POST['id_requisicion'])) {
-            echo json_encode(['success' => true, 'mensaje' => 'Pago solicitado correctamente.']);
+        if ($pagoController->marcarPagado($id_requisicion, $id_tipo_pago)) {
+            echo json_encode(['success' => true, 'mensaje' => 'Pago confirmado correctamente.']);
         } else {
             http_response_code(400);
-            echo json_encode(['success' => false, 'mensaje' => 'Error al solicitar el pago.']);
+            echo json_encode(['success' => false, 'mensaje' => 'Error al confirmar el pago.']);
         }
     } else {
         http_response_code(400);

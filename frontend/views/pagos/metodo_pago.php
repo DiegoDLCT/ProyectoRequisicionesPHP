@@ -129,50 +129,73 @@ $tipos_pago = $stmt_tipos->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <form method="POST" action="<?= SERVICES_URL ?>/confirmar_pago_service.php">
+        <form id="formMetodoPago" style="display: none;">
             <input type="hidden" name="id_requisicion" value="<?= $id_requisicion ?>">
-            
-            <h2 style="margin-bottom: 20px; font-size: 18px; color: #1d1d1f;">Métodos de Pago Disponibles</h2>
-            <div class="metodos-container">
-                <?php foreach ($tipos_pago as $tipo): ?>
-                    <label style="cursor: pointer;">
-                        <div class="metodo-card" id="metodo-<?= $tipo['id'] ?>">
-                            <?php 
-                                $iconos = [
-                                    'Efectivo' => 'bi-cash',
-                                    'Transferencia' => 'bi-bank',
-                                    'Tarjeta de débito' => 'bi-credit-card'
-                                ];
-                                $icono = $iconos[$tipo['CNombre']] ?? 'bi-question-circle';
-                            ?>
-                            <i class="bi <?= $icono ?> metodo-icon"></i>
-                            <div class="metodo-nombre"><?= htmlspecialchars($tipo['CNombre']) ?></div>
-                            <div class="metodo-desc">
-                                <?php
-                                    $descripciones = [
-                                        'Efectivo' => 'Pago en efectivo',
-                                        'Transferencia' => 'Transferencia bancaria',
-                                        'Tarjeta de débito' => 'Tarjeta de débito bancaria'
-                                    ];
-                                    echo $descripciones[$tipo['CNombre']] ?? '';
-                                ?>
-                            </div>
-                            <input type="radio" name="id_tipo_pago" value="<?= $tipo['id'] ?>" style="display: none;" onchange="seleccionarMetodo(<?= $tipo['id'] ?>)">
-                        </div>
-                    </label>
-                <?php endforeach; ?>
-            </div>
-
-            <div class="actions">
-                <button type="submit" class="btn" id="btn-confirmar" disabled>
-                    <i class="bi bi-check-circle"></i> Confirmar Pago
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="history.back()">
-                    <i class="bi bi-arrow-left"></i> Cancelar
-                </button>
-            </div>
-            <div class="error" id="error-msg"></div>
+            <input type="hidden" name="id_tipo_pago" id="id_tipo_pago_input" value="">
         </form>
+
+        <div class="requisicion-info">
+            <h3>📋 Detalles de la Requisición</h3>
+            <div class="info-row">
+                <span class="info-label">Folio:</span>
+                <span class="info-value"><?= htmlspecialchars($requisicion['cFolio']) ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Proveedor:</span>
+                <span class="info-value"><?= htmlspecialchars($requisicion['proveedor_nombre']) ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Descripción:</span>
+                <span class="info-value"><?= htmlspecialchars($requisicion['cDescripcion']) ?></span>
+            </div>
+            <div class="monto">
+                Monto a Pagar: $<?= number_format($requisicion['cotizacion_monto'], 2) ?>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 20px; font-size: 18px; color: #1d1d1f;">Métodos de Pago Disponibles</h2>
+        <div class="metodos-container">
+            <?php foreach ($tipos_pago as $tipo): ?>
+                <label style="cursor: pointer;">
+                    <div class="metodo-card" id="metodo-<?= $tipo['id'] ?>" onclick="seleccionarMetodo(<?= $tipo['id'] ?>)">
+                        <?php 
+                            $iconos = [
+                                'Efectivo' => 'bi-cash',
+                                'Transferencia' => 'bi-bank',
+                                'Tarjeta de débito' => 'bi-credit-card'
+                            ];
+                            $icono = $iconos[$tipo['CNombre']] ?? 'bi-question-circle';
+                        ?>
+                        <i class="bi <?= $icono ?> metodo-icon"></i>
+                        <div class="metodo-nombre"><?= htmlspecialchars($tipo['CNombre']) ?></div>
+                        <div class="metodo-desc">
+                            <?php
+                                $descripciones = [
+                                    'Efectivo' => 'Pago en efectivo',
+                                    'Transferencia' => 'Transferencia bancaria',
+                                    'Tarjeta de débito' => 'Tarjeta de débito bancaria'
+                                ];
+                                echo $descripciones[$tipo['CNombre']] ?? '';
+                            ?>
+                        </div>
+                        <input type="radio" name="id_tipo_pago" value="<?= $tipo['id'] ?>" style="display: none;">
+                    </div>
+                </label>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="btn" id="btn-confirmar" onclick="confirmarPagoAjax()" disabled>
+                <i class="bi bi-check-circle"></i> Confirmar Pago
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="history.back()">
+                <i class="bi bi-arrow-left"></i> Cancelar
+            </button>
+            <a href="../../index.php" class="btn" style="background: #2563eb;">
+                <i class="bi bi-house"></i> Inicio
+            </a>
+        </div>
+        <div class="error" id="error-msg"></div>
     </div>
 
     <script>
@@ -187,30 +210,71 @@ $tipos_pago = $stmt_tipos->fetchAll(PDO::FETCH_ASSOC);
             
             // Marcar el radio
             document.querySelector('input[value="' + id + '"]').checked = true;
+            document.getElementById('id_tipo_pago_input').value = id;
             
             // Habilitar botón
             document.getElementById('btn-confirmar').disabled = false;
             document.getElementById('error-msg').textContent = '';
         }
 
-        // Click en las tarjetas
+        function confirmarPagoAjax() {
+            const tipoSeleccionado = document.querySelector('input[name="id_tipo_pago"]:checked');
+            if (!tipoSeleccionado) {
+                document.getElementById('error-msg').textContent = 'Por favor, selecciona un método de pago';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('id_requisicion', document.querySelector('input[name="id_requisicion"]').value);
+            formData.append('id_tipo_pago', tipoSeleccionado.value);
+
+            const btnConfirmar = document.getElementById('btn-confirmar');
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
+
+            fetch('/ProyectoPHP/frontend/services/confirmar_pago_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(text => {
+                console.log('Respuesta recibida:', text);
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        document.getElementById('error-msg').style.color = '#10b981';
+                        document.getElementById('error-msg').textContent = '✓ ' + data.mensaje;
+                        setTimeout(() => {
+                            window.location.href = './confirmar.php';
+                        }, 1500);
+                    } else {
+                        document.getElementById('error-msg').textContent = 'Error: ' + data.mensaje;
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pago';
+                    }
+                } catch (e) {
+                    console.error('Error al parsear JSON:', e);
+                    document.getElementById('error-msg').textContent = 'Error: ' + text.substring(0, 100);
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pago';
+                }
+            })
+            .catch(error => {
+                console.error('Error en fetch:', error);
+                document.getElementById('error-msg').textContent = 'Error en la solicitud: ' + error;
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pago';
+            });
+        }
+
+        // Click en las tarjetas para seleccionar
         document.querySelectorAll('.metodo-card').forEach(card => {
             card.addEventListener('click', function() {
                 const radio = this.querySelector('input[type="radio"]');
                 if (radio) {
-                    radio.checked = true;
                     seleccionarMetodo(radio.value);
                 }
             });
-        });
-
-        // Validar antes de enviar
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const tipoSeleccionado = document.querySelector('input[name="id_tipo_pago"]:checked');
-            if (!tipoSeleccionado) {
-                e.preventDefault();
-                document.getElementById('error-msg').textContent = 'Por favor, selecciona un método de pago';
-            }
         });
     </script>
 </body>

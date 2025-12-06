@@ -1,23 +1,23 @@
-# 📦 Sistema de Gestión de Requisiciones v1.0
+# Sistema de Gestión de Requisiciones v1.0
 
 Sistema web integral para la gestión digital de requisiciones, cotizaciones, pagos y entregas empresariales. Desarrollado con arquitectura MVC en PHP puro y MySQL.
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
-✅ **Gestión Completa de Requisiciones** - Ciclo completo de 7 estados  
-✅ **Sistema de Cotizaciones** - Múltiples cotizaciones por requisición  
-✅ **Control de Pagos** - Solicitud, confirmación y seguimiento  
-✅ **Gestión de Entregas** - Preparación y confirmación de entregas  
-✅ **Control de Usuarios por Rol** - 5 roles con permisos específicos  
-✅ **Gestión de Proveedores** - Base de datos de proveedores  
-✅ **Interfaz Minimalista** - Diseño moderno y responsivo  
-✅ **Seguridad Avanzada** - Autenticación, autorización y validación  
+- **Gestión Completa de Requisiciones** - Ciclo completo de 7 estados  
+- **Sistema de Cotizaciones** - Múltiples cotizaciones por requisición  
+- **Control de Pagos** - Solicitud, confirmación y seguimiento  
+- **Gestión de Entregas** - Preparación y confirmación de entregas  
+- **Control de Usuarios por Rol** - 5 roles con permisos específicos  
+- **Gestión de Proveedores** - Base de datos de proveedores  
+- **Interfaz Minimalista** - Diseño moderno y responsivo  
+- **Seguridad Avanzada** - Autenticación, autorización y validación  
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ### 7 Estados de Requisición
 
@@ -48,7 +48,7 @@ Pendiente → Cotizado → Pago Solicitado → Pagado → Por Entregar → Entre
 
 ---
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Requisitos
 - PHP 7.4+
@@ -79,6 +79,174 @@ Pendiente → Cotizado → Pago Solicitado → Pagado → Por Entregar → Entre
 ### Credenciales de Prueba
 - **Email:** admin@admin.com
 - **Contraseña:** password
+
+---
+
+## Guía para Compañeros - Cómo Correr el Proyecto
+
+### Pre-requisitos
+1. **XAMPP instalado** (descargar de https://www.apachefriends.org/)
+2. **Apache y MySQL activados** en XAMPP
+3. **Git instalado** (para clonar el repositorio)
+
+### Pasos de Instalación
+
+**Paso 1: Clonar el repositorio**
+```bash
+cd C:\xampp\htdocs
+git clone https://github.com/DiegoDLCT/ProyectoRequisicionesPHP.git
+cd ProyectoRequisicionesPHP
+```
+
+**Paso 2: Ejecutar setup automático**
+```bash
+php setup_database.php
+```
+Este script configura automáticamente:
+- Crea la base de datos `sistema_requisiciones`
+- Crea todas las tablas necesarias
+- Carga datos iniciales (áreas, unidades, etc.)
+- Crea usuario admin de prueba
+
+**Paso 3: Acceder al sistema**
+- Abre tu navegador
+- Ve a: `http://localhost/ProyectoPHP/frontend/views/auth/login.php`
+- O simplemente: `http://localhost/ProyectoPHP/` (redirige automáticamente)
+
+**Paso 4: Iniciar sesión**
+```
+Email: admin@admin.com
+Contraseña: password
+```
+
+### Estructura de Carpetas Importante
+
+```
+ProyectoPHP/
+├── frontend/              ← PUNTO DE ENTRADA PRINCIPAL
+│   └── index.php         (redirige según el rol del usuario)
+├── backend/              ← Lógica del sistema
+├── scripts/
+│   ├── dev/             ← Scripts de desarrollo (no necesarios para correr)
+│   └── ...otros archivos de utilidad
+├── migrations/          ← Esquemas de BD
+└── uploads/            ← Archivos cargados (cotizaciones, etc.)
+```
+
+### Solución de Problemas Comunes
+
+**Error: "Base de datos no existe"**
+- Ejecuta nuevamente: `php setup_database.php`
+- Verifica que MySQL esté corriendo en XAMPP
+
+**Error: "No puedo acceder a login.php"**
+- Ve directamente a: `http://localhost/ProyectoPHP/`
+- El sistema redirige automáticamente
+
+**Error: "Sesión expirada"**
+- Limpia las cookies de tu navegador
+- Intenta nuevamente el login
+
+**Error de permisos en archivos**
+- Verifica que la carpeta `/uploads/` tenga permisos de escritura
+- En Windows, normalmente no hay problemas
+
+### Cuentas de Prueba Disponibles
+
+Después de correr `setup_database.php`, hay varias cuentas predefinidas:
+
+| Email | Rol | Contraseña |
+|-------|-----|-----------|
+| admin@admin.com | Admin | password |
+| jefe@admin.com | Jefe Mayor | password |
+| conta@admin.com | Contaduría | password |
+
+Para crear más usuarios, usa el módulo de **Gestión de Usuarios** como admin.
+
+### Notas Importantes
+
+**Archivos de Desarrollo**
+- La carpeta `scripts/dev/` contiene scripts de prueba y no es necesaria para correr el sistema
+- Estos archivos son solo para desarrollo y testing
+- Puedes ignorarla tranquilamente
+
+**Estructura Limpia**
+- El proyecto está organizado en capas (MVC)
+- `backend/` → Lógica de negocios
+- `frontend/` → Interfaz de usuario
+- Todos los archivos innecesarios están en `scripts/dev/`
+
+**Seguridad**
+- Nunca subirás datos sensibles a git (en `.gitignore`)
+- Las credenciales por defecto son solo para desarrollo
+- En producción, cambia las contraseñas
+
+---
+
+## Configuración de Rutas y Base de Datos
+
+### Estructura de Rutas del Proyecto
+
+El proyecto está configurado para funcionar en `C:\xampp\htdocs\ProyectoPHP\`
+
+**Punto de entrada principal:**
+```
+http://localhost/ProyectoPHP/
+```
+
+Este punto de entrada redirige automáticamente a:
+```
+frontend/views/auth/login.php  (si no hay sesión)
+frontend/views/dashboard/      (si ya hay sesión, según el rol)
+```
+
+### Rutas Principales por Rol
+
+| Rol | Dashboard | URL |
+|-----|-----------|-----|
+| Admin | admin.php | `/ProyectoPHP/frontend/views/dashboard/admin.php` |
+| Jefe Mayor | jefe_mayor.php | `/ProyectoPHP/frontend/views/dashboard/jefe_mayor.php` |
+| Contaduría | contaduria.php | `/ProyectoPHP/frontend/views/dashboard/contaduria.php` |
+| Jefe de Área | jefe_area.php | `/ProyectoPHP/frontend/views/dashboard/jefe_area.php` |
+| Solicitante | listar.php | `/ProyectoPHP/frontend/views/requisiciones/listar.php` |
+
+### Base de Datos - Información Técnica
+
+**Base de datos:** `sistema_requisiciones`
+
+**Tablas principales (8 tablas):**
+
+1. **usuarios** - Gestión de usuarios y roles
+2. **areas** - Áreas de la organización
+3. **requisiciones** - Requisiciones (ciclo completo)
+4. **cotizaciones** - Cotizaciones múltiples
+5. **proveedores** - Base de datos de proveedores
+6. **compras** - Registro de compras automáticas
+7. **tipos_pago** - Métodos de pago
+8. **unidades** - Unidades de medida
+
+**Estados válidos de requisición:**
+- `pendiente` - Esperando cotización
+- `cotizado` - Cotización recibida
+- `solicitar_pago` - Listo para solicitar pago
+- `pago_solicitado` - Pago en solicitud
+- `pagado` - Pago confirmado
+- `por_entregar` - En tránsito
+- `entregado` - Completado
+
+### Script SQL Completo
+
+Se proporciona un script SQL completo en `migrations/setup_complete.sql` que:
+- Crea la base de datos desde cero
+- Crea todas las tablas con relaciones correctas
+- Carga datos iniciales (áreas, unidades, tipos de pago)
+- Configura índices para optimización
+- Habilita claves foráneas
+
+**Para ejecutar manualmente (opcional):**
+```bash
+mysql -u root -p < migrations/setup_complete.sql
+```
 
 ---
 

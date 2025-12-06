@@ -3,8 +3,13 @@ session_start();
 require_once __DIR__ . '/../../backend/utils/auth.php';
 require_once __DIR__ . '/../../backend/controllers/PagoController.php';
 
-verificarSesion();
-if (!tieneRol(['contaduria'])) {
+if (!isset($_SESSION['usuario'])) {
+    $_SESSION['mensaje_error'] = 'Sesión no válida.';
+    header('Location: ../index.php?error=denegado');
+    exit;
+}
+
+if (!tieneRol('contaduria')) {
     $_SESSION['mensaje_error'] = 'No tienes permisos para realizar esta acción.';
     header('Location: ../index.php?error=denegado');
     exit;

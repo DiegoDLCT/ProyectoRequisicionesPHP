@@ -14,255 +14,254 @@ $db = (new Database())->getConnection();
 $aprobacionController = new AprobacionController();
 $requisicionesConCotizaciones = $aprobacionController->obtenerTodasLasRequisicionesConCotizaciones();
 
-// Estadísticas rápidas
+// Estadísticas - Solo lo que ve jefe_mayor (cotizadas, pagos solicitados, por entregar)
 $stmt = $db->query("SELECT estado, COUNT(*) as count FROM requisiciones WHERE lActivo = 1 GROUP BY estado");
-$estadisticas = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-$pendientes = $estadisticas['pendiente'] ?? 0;
-$cotizadas = $estadisticas['cotizado'] ?? 0;
-$aprobadas = $estadisticas['solicitar_pago'] ?? 0;
-$pendientes_aprobacion = count($requisicionesConCotizaciones);
-$sin_completar = $db->query("SELECT COUNT(*) FROM requisiciones WHERE lActivo = 1 AND estado <> 'entregado'")->fetchColumn();
+$estadisticas_datos = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-// Folder del proyecto para fetch dinámico
-$uriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-$projectFolder = $uriParts[0] ?? '';
+// Función para formatear rol
+function formatearRol($rol) {
+    $roles = [
+        'admin' => 'Administrador',
+        'jefe_mayor' => 'Jefe Mayor',
+        'contaduria' => 'Contaduría',
+        'jefe_area' => 'Jefe de Área',
+        'solicitante' => 'Solicitante'
+    ];
+    return $roles[$rol] ?? ucfirst(str_replace('_', ' ', $rol));
+}
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - Jefe Mayor</title>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Jefe Mayor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../assets/css/global.css">
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .dashboard {
+        .dashboard-header {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 1200px;
-            margin: 0 auto 40px;
-        }
-        h1 { 
-            color: #2563eb; 
-            margin-bottom: 20px;
-        }
-        h2 { color: #1f2937; margin: 20px 0 10px; }
-        .user-info {
-            background: #f0f9ff;
-            padding: 15px;
-            border-radius: 5px;
+            border-bottom: 1px solid var(--border);
             margin-bottom: 30px;
-            border-left: 4px solid #2563eb;
+            padding: 20px;
+            border-radius: var(--radius-lg);
         }
-        .modules-grid {
+
+        .user-card {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
-            margin: 20px 0 30px;
+            margin-bottom: 30px;
         }
-        .module-card {
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            text-decoration: none;
-            color: #1f2937;
-            border: 2px solid #e5e7eb;
-            transition: all 0.3s ease;
+
+        .user-field {
+            font-size: 13px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
         }
-        .module-card:hover {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-            transform: translateY(-2px);
+
+        .user-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
         }
-        .module-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
-        .module-desc { font-size: 14px; color: #6b7280; }
-        .module-card:hover .module-desc { color: #e5e7eb; }
-        .stats {
+
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 10px 0 30px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
+
         .stat-card {
             background: white;
             padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary);
         }
-        .stat-number { font-size: 24px; font-weight: bold; color: #2563eb; }
-        .stat-label { font-size: 14px; color: #6b7280; }
-        .section-card {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            margin-top: 10px;
+
+        .stat-card.pending { border-left-color: #f59e0b; }
+        .stat-card.quoted { border-left-color: #3b82f6; }
+        .stat-card.warning { border-left-color: #ef4444; }
+        .stat-card.success { border-left-color: #10b981; }
+        .stat-card.info { border-left-color: #8b5cf6; }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
-        .requisicion-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            margin-bottom: 18px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark);
         }
-        .cotizacion-item {
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            margin: 12px 0;
-            cursor: pointer;
-            transition: all 0.2s ease;
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
-        .cotizacion-item:hover { border-color: #2563eb; }
-        .radio-container { display: flex; align-items: center; gap: 10px; }
-        .monto { font-size: 18px; font-weight: bold; color: #059669; margin: 6px 0; }
-        .proveedor { font-size: 16px; font-weight: bold; color: #1f2937; }
-        .preview-container { height: 220px; border: 1px solid #eee; border-radius: 6px; overflow: hidden; margin-top: 8px; }
-        .preview-container iframe, .preview-container img { width: 100%; height: 100%; object-fit: contain; }
-        .btn { background: #2563eb; color: #fff; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
-        .btn-success { background: #059669; }
-        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
-        .mensaje-seleccion { color: #6b7280; margin-top: 6px; }
-        .empty-state { text-align: center; color: #6b7280; padding: 20px; }
-        .logout {
-            color: #dc2626;
+
+        .shortcut-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 30px 20px;
+            text-align: center;
             text-decoration: none;
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            border: 1px solid #dc2626;
-            border-radius: 5px;
+            color: var(--dark);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            cursor: pointer;
         }
-        .logout:hover { background: #dc2626; color: white; }
+
+        .shortcut-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .shortcut-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .shortcut-card.primary .shortcut-icon { color: #3b82f6; }
+        .shortcut-card.success .shortcut-icon { color: #10b981; }
+        .shortcut-card.warning .shortcut-icon { color: #f59e0b; }
+        .shortcut-card.danger .shortcut-icon { color: #ef4444; }
+        .shortcut-card.info .shortcut-icon { color: #8b5cf6; }
+
+        .shortcut-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .shortcut-subtitle {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .user-card {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shortcuts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .shortcuts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <h1>Panel de Jefe Mayor</h1>
-        <div class="user-info">
-            <strong>Usuario:</strong> <?php echo htmlspecialchars($usuario['cNombre']); ?><br>
-            <strong>Email:</strong> <?php echo htmlspecialchars($usuario['cCorreo']); ?><br>
-            <strong>Puesto:</strong> <?php echo htmlspecialchars($usuario['cPuesto']); ?>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Panel Jefe Mayor</h1>
         </div>
 
-        <div class="stats">
-            <div class="stat-card"><div class="stat-number"><?php echo $sin_completar; ?></div><div class="stat-label">Requisiciones sin completar</div></div>
-            <div class="stat-card"><div class="stat-number"><?php echo $pendientes; ?></div><div class="stat-label">Sin Cotizar</div></div>
-            <div class="stat-card"><div class="stat-number"><?php echo $cotizadas; ?></div><div class="stat-label">Cotizadas</div></div>
-            <div class="stat-card"><div class="stat-number"><?php echo $pendientes_aprobacion; ?></div><div class="stat-label">Pendientes de Aprobación</div></div>
-        </div>
-
-        <h2>Módulos</h2>
-        <div class="modules-grid">
-            <a href="../cotizaciones/aprobar.php" class="module-card">
-                <div class="module-title">Aprobar Cotizaciones</div>
-                <div class="module-desc">Revisar y aprobar cotizaciones pendientes</div>
-            </a>
-            <a href="../pagos/solicitar.php" class="module-card">
-                <div class="module-title">Solicitar Pagos</div>
-                <div class="module-desc">Pedir pagos de cotizaciones ganadoras</div>
-            </a>
-            <a href="../requisiciones/listar.php" class="module-card">
-                <div class="module-title">Ver Requisiciones</div>
-                <div class="module-desc">Consulta y seguimiento</div>
-            </a>
-            <a href="../cotizaciones/seguimiento.php" class="module-card">
-                <div class="module-title">Seguimiento de Cotizaciones</div>
-                <div class="module-desc">Todas las cotizaciones activas</div>
+        <!-- Información del usuario -->
+        <div class="dashboard-header">
+            <div class="user-card">
+                <div>
+                    <div class="user-field">Usuario</div>
+                    <div class="user-value"><?php echo htmlspecialchars($usuario['cNombre']); ?></div>
+                </div>
+                <div>
+                    <div class="user-field">Email</div>
+                    <div class="user-value"><?php echo htmlspecialchars($usuario['cCorreo']); ?></div>
+                </div>
+                <div>
+                    <div class="user-field">Rol</div>
+                    <div class="user-value"><?php echo htmlspecialchars(formatearRol($usuario['cPuesto'])); ?></div>
+                </div>
+            </div>
+            <a href="../auth/logout.php" class="btn btn-sm" style="background: #ef4444;">
+                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
             </a>
         </div>
 
-        <a href="../auth/logout.php" class="logout">Cerrar Sesión</a>
-    </div>
-
-    <script>
-    function aprobarCotizacionAjax(event, requisicionId) {
-        event.preventDefault();
-        const btn = document.getElementById('btn-aprobar-' + requisicionId);
-        const hiddenInput = document.getElementById('hidden-cotizacion-' + requisicionId);
-        if (!hiddenInput.value) return;
-        btn.disabled = true;
-        fetch('/' + '<?php echo $projectFolder; ?>' + '/backend/services/aprobar_service.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'id_cotizacion_aprobada=' + encodeURIComponent(hiddenInput.value)
-        })
-        .then(r => r.text())
-        .then(() => {
-            document.getElementById('success-message').style.display = 'block';
-            document.getElementById('success-message').textContent = 'Cotización aprobada exitosamente';
-            const card = btn.closest('.requisicion-card');
-            if (card) card.remove();
-        })
-        .catch(() => {
-            document.getElementById('success-message').style.display = 'block';
-            document.getElementById('success-message').textContent = 'Error al aprobar la cotización';
-        });
-    }
-
-    function seleccionarCotizacion(cotizacionId, requisicionId) {
-        const radio = document.getElementById('cotizacion-' + cotizacionId);
-        if (radio && !radio.disabled) {
-            radio.checked = true;
-            actualizarSeleccion(requisicionId);
-        }
-    }
-
-        function actualizarSeleccion(requisicionId) {
-            const form = document.getElementById('form-' + requisicionId);
-            if (!form) return;
+        <!-- Estadísticas - Solo lo que ve jefe_mayor -->
+        <div class="stats-grid">
+            <?php 
+            // Jefe Mayor solo ve: cotizado, pago_solicitado, por_entregar
+            $estadoLabels = [
+                'cotizado' => ['label' => 'Por Aprobar', 'color' => 'quoted'],
+                'pago_solicitado' => ['label' => 'Pago Solicitado', 'color' => 'warning'],
+                'por_entregar' => ['label' => 'Por Entregar', 'color' => 'info']
+            ];
             
-            const radio = form.querySelector('input[name="id_cotizacion_aprobada_' + requisicionId + '"]:checked');
-            const btn = document.getElementById('btn-aprobar-' + requisicionId);
-            const mensaje = document.getElementById('mensaje-seleccion-' + requisicionId);
-            const hiddenInput = document.getElementById('hidden-cotizacion-' + requisicionId);
-            
-            // Actualizar hidden input y botón
-            if (radio && hiddenInput) {
-                hiddenInput.value = radio.value;
-                btn.disabled = false;
-            } else {
-                btn.disabled = true;
-            }
-            
-            // Actualizar mensaje
-            if (mensaje) {
-                if (radio) {
-                    mensaje.textContent = 'Listo para aprobar la cotización seleccionada';
-                    mensaje.classList.add('activo');
-                } else {
-                    mensaje.textContent = 'Selecciona una cotización para habilitar la aprobación';
-                    mensaje.classList.remove('activo');
-                }
-            }
-            
-            // Actualizar estilos visuales
-            const items = form.querySelectorAll('.cotizacion-item');
-            items.forEach(item => {
-                item.classList.remove('cotizacion-seleccionada');
-                const radioInItem = item.querySelector('input[type="radio"]');
-                if (radioInItem && radioInItem.checked) {
-                    item.classList.add('cotizacion-seleccionada');
-                }
-            });
-        }
-        
-        // Inicializar estado de los formularios
-        document.addEventListener('DOMContentLoaded', function() {
-            <?php foreach ($requisicionesConCotizaciones as $requisicion): ?>
-                actualizarSeleccion(<?php echo $requisicion['id']; ?>);
+            foreach ($estadoLabels as $estado => $config): 
+                $cantidad = $estadisticas_datos[$estado] ?? 0;
+            ?>
+                <div class="stat-card <?php echo $config['color']; ?>">
+                    <div class="stat-label"><?php echo $config['label']; ?></div>
+                    <div class="stat-value"><?php echo $cantidad; ?></div>
+                </div>
             <?php endforeach; ?>
-        });
-    </script>   
+        </div>
+
+        <!-- Accesos Directos -->
+        <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--dark); margin-bottom: 20px; font-size: 18px;">
+                <i class="bi bi-lightning-fill" style="color: #f59e0b;"></i> Accesos Rápidos
+            </h3>
+            
+            <div class="shortcuts-grid">
+                <!-- Aprobar Cotizaciones -->
+                <a href="../cotizaciones/aprobar.php" class="shortcut-card success">
+                    <i class="bi bi-file-earmark-check shortcut-icon"></i>
+                    <div class="shortcut-title">Aprobar Cotizaciones</div>
+                    <div class="shortcut-subtitle">Revisar presupuestos</div>
+                </a>
+
+                <!-- Solicitar Pagos -->
+                <a href="../pagos/solicitar.php" class="shortcut-card warning">
+                    <i class="bi bi-cash-coin shortcut-icon"></i>
+                    <div class="shortcut-title">Solicitar Pagos</div>
+                    <div class="shortcut-subtitle">Gestionar pagos</div>
+                </a>
+
+                <!-- Ver Requisiciones -->
+                <a href="../requisiciones/listar.php" class="shortcut-card primary">
+                    <i class="bi bi-list-check shortcut-icon"></i>
+                    <div class="shortcut-title">Requisiciones</div>
+                    <div class="shortcut-subtitle">Ver solicitudes</div>
+                </a>
+
+                <!-- Seguimiento de Cotizaciones -->
+                <a href="../cotizaciones/seguimiento.php" class="shortcut-card info">
+                    <i class="bi bi-eye shortcut-icon"></i>
+                    <div class="shortcut-title">Seguimiento</div>
+                    <div class="shortcut-subtitle">Todas las cotizaciones</div>
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

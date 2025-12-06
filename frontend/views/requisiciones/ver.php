@@ -139,6 +139,7 @@ if (!$requisicion) {
             </div>
             <div>
                 <button onclick="history.back()" class="btn btn-secondary">Volver</button>
+                <a href="../../index.php" class="btn" style="background: #2563eb; margin-left: 10px;"><i class="bi bi-house"></i> Inicio</a>
                 <?php if ($requisicion['estado'] == 'pendiente' && !$requisicion['bRequiereCotizacion']): ?>
                     <button onclick="marcarParaSolicitarPago(<?php echo $requisicion['id']; ?>)" class="btn" style="background: #f59e0b;">
                         ✓ Marcar para solicitar pago

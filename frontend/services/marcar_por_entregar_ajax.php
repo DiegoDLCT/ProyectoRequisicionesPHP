@@ -10,7 +10,7 @@ session_start();
 require_once __DIR__ . '/../../backend/utils/auth.php';
 require_once __DIR__ . '/../../backend/controllers/PagoController.php';
 
-// Limpiar buffer y desactivar para evitar problemas
+// Limpiar buffer
 ob_end_clean();
 
 try {
@@ -20,7 +20,7 @@ try {
         exit;
     }
 
-    if (!tieneRol('jefe_mayor') && !tieneRol('admin')) {
+    if (!tieneRol('admin')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'mensaje' => 'No tienes permisos para realizar esta acción.']);
         exit;
@@ -29,11 +29,11 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_requisicion'])) {
         $pagoController = new PagoController();
         
-        if ($pagoController->solicitarPago($_POST['id_requisicion'])) {
-            echo json_encode(['success' => true, 'mensaje' => 'Pago solicitado correctamente.']);
+        if ($pagoController->marcarPorEntregar($_POST['id_requisicion'])) {
+            echo json_encode(['success' => true, 'mensaje' => 'Requisición marcada como lista para entregar.']);
         } else {
             http_response_code(400);
-            echo json_encode(['success' => false, 'mensaje' => 'Error al solicitar el pago.']);
+            echo json_encode(['success' => false, 'mensaje' => 'Error al actualizar el estado.']);
         }
     } else {
         http_response_code(400);
@@ -44,4 +44,3 @@ try {
     echo json_encode(['success' => false, 'mensaje' => 'Error: ' . $e->getMessage()]);
 }
 exit;
-?>

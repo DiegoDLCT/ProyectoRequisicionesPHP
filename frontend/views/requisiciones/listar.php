@@ -59,6 +59,7 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s ease;
+            font-size: 14px;
         }
         .btn:hover {
             background: #1d4ed8;
@@ -127,6 +128,7 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                 <button id="scrollToTop" class="btn" title="Volver al inicio" style="background: #10b981;">
                     <i class="bi bi-arrow-left"></i> Atrás
                 </button>
+                <a href="../../index.php" class="btn" style="background: #2563eb;"><i class="bi bi-house"></i> Inicio</a>
                 <a href="crear.php" class="btn">Nueva Requisición</a>
             </div>
         </h1>
@@ -151,7 +153,7 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                         <th>Fecha</th>
                         <?php if (!$esUsuarioNormal): ?><th>Solicitante</th><?php endif; ?>
                         <th>Ubicación</th>
-                        <th>Unidad</th>
+                        <th>Descripción</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -163,7 +165,9 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                         <td><?php echo $req['dFechaSolicitud']; ?></td>
                         <?php if (!$esUsuarioNormal): ?><td><?php echo $req['solicitante_nombre']; ?></td><?php endif; ?>
                         <td><?php echo $req['cObraUbicacion'] ?: '--'; ?></td>
-                        <td><?php echo $req['unidad_nombre'] ?? 'N/A'; ?></td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($req['cDescripcion']); ?>">
+                            <?php echo substr($req['cDescripcion'], 0, 50); ?><?php echo strlen($req['cDescripcion']) > 50 ? '...' : ''; ?>
+                        </td>
                         <td>
                             <span class="estado estado-<?php echo $req['estado']; ?>">
                                 <?php 
@@ -182,10 +186,10 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                         </td>
                         <td class="acciones">
                             <a href="ver.php?id=<?php echo $req['id']; ?>" class="ver">Detalle</a>
-                            <?php if ($req['estado'] == 'pendiente'): ?>
+                            <?php if (tieneRol('admin') && $req['estado'] == 'pendiente'): ?>
                                 <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Cotizar</a>
                             <?php endif; ?>
-                            <?php if ($req['estado'] == 'cotizado'): ?>
+                            <?php if (tieneRol('admin') && $req['estado'] == 'cotizado'): ?>
                                 <a href="../cotizaciones/seguimiento.php?id_requisicion=<?php echo $req['id']; ?>" class="ver-cotizaciones">Ver Cotiz.</a>
                                 <a href="../cotizaciones/subir.php?id_requisicion=<?php echo $req['id']; ?>" class="cotizar">Agregar Cotiz.</a>
                             <?php endif; ?>
@@ -201,10 +205,6 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                 Total: <?php echo count($requisiciones); ?> requisiciones
             </div>
         <?php endif; ?>
-        
-        <div style="margin-top: 20px;">
-            <a href="../../index.php" class="btn" style="background: #6b7280;">← Volver al Dashboard</a>
-        </div>
     </div>
 
     <script>
