@@ -43,6 +43,16 @@ $areaId = $usuario['idArea'] ?? null;
 
 $db = (new Database())->getConnection();
 
+// Obtener cotizaciones aprobadas del área
+$cotizacionesAprobadas = 0;
+if ($areaId) {
+    $stmtCot = $db->prepare("SELECT COUNT(*) as total FROM cotizaciones c 
+                             JOIN requisiciones r ON c.idRequisicion = r.id 
+                             WHERE c.bAprovada = 1 AND r.idArea = ? AND r.lActivo = 1");
+    $stmtCot->execute([$areaId]);
+    $cotizacionesAprobadas = $stmtCot->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+}
+
 // Solo mostrar estadísticas del ÁREA del jefe_area - por estado
 $estadisticas = [];
 $areaNombre = '';
@@ -337,6 +347,11 @@ if ($areaId) {
                     <div class="stat-value"><?php echo $cantidad; ?></div>
                 </div>
             <?php endforeach; ?>
+            <!-- Cotizaciones Aprobadas -->
+            <div class="stat-card" style="border-left-color: #3b82f6;">
+                <div class="stat-label">Cotizaciones Aprobadas</div>
+                <div class="stat-value"><?php echo $cotizacionesAprobadas; ?></div>
+            </div>
         </div>
 
         <!-- Accesos Directos -->

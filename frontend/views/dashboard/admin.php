@@ -22,6 +22,10 @@ $db = (new Database())->getConnection();
 $stmt = $db->query("SELECT estado, COUNT(*) as count FROM requisiciones WHERE lActivo = 1 GROUP BY estado");
 $estadisticas_datos = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
+// Obtener cotizaciones aprobadas
+$stmtCot = $db->query("SELECT COUNT(*) as total FROM cotizaciones WHERE bAprovada = 1");
+$cotizacionesAprobadas = $stmtCot->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+
 // Función para formatear rol
 function formatearRol($rol) {
     $roles = [
@@ -226,6 +230,11 @@ function formatearRol($rol) {
                     <div class="stat-value"><?php echo $cantidad; ?></div>
                 </div>
             <?php endforeach; ?>
+            <!-- Cotizaciones Aprobadas -->
+            <div class="stat-card quoted">
+                <div class="stat-label">Cotizaciones Aprobadas</div>
+                <div class="stat-value"><?php echo $cotizacionesAprobadas; ?></div>
+            </div>
         </div>
 
         <!-- Accesos Directos -->
