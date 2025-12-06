@@ -25,8 +25,8 @@ php setup_database.php
 ```
 
 Este script:
-- Crea la base de datos `requisiciones_db`
-- Importa el esquema desde `migrations/db_structure_dump.sql`
+- Crea la base de datos `sistema_requisiciones`
+- Importa el esquema desde `migrations/setup_complete.sql`
 - Crea usuario admin por defecto
 
 ### 3. Configurar la Conexión a la Base de Datos
@@ -37,7 +37,7 @@ Si usas configuración personalizada, edita `backend/config/database.php`:
 const DB_HOST = 'localhost';
 const DB_USER = 'root';
 const DB_PASSWORD = '';
-const DB_NAME = 'requisiciones_db';
+const DB_NAME = 'sistema_requisiciones';
 ```
 
 ### 4. Acceder al Sistema

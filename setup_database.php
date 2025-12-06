@@ -12,7 +12,7 @@ echo "================================================\n\n";
 $dbHost = 'localhost';
 $dbUser = 'root';
 $dbPassword = '';
-$dbName = 'requisiciones_db';
+$dbName = 'sistema_requisiciones';
 
 echo "Configuración:\n";
 echo "   Host: $dbHost\n";

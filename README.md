@@ -68,7 +68,7 @@ Pendiente → Cotizado → Pago Solicitado → Pagado → Por Entregar → Entre
    php setup_database.php
    ```
    Este script crea automáticamente:
-   - Base de datos `requisiciones_db`
+   - Base de datos `sistema_requisiciones`
    - Todas las tablas
    - Usuario admin (admin@admin.com / password)
 
@@ -386,7 +386,7 @@ Edita `backend/config/database.php`:
 const DB_HOST = 'localhost';
 const DB_USER = 'root';
 const DB_PASSWORD = '';
-const DB_NAME = 'requisiciones_db';
+const DB_NAME = 'sistema_requisiciones';
 ```
 
 ### Crear usuarios adicionales
