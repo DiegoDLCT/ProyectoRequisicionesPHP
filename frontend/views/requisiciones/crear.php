@@ -27,6 +27,53 @@ foreach ($areas as $area) {
         break;
     }
 }
+
+// Procesar formulario si se envía por POST
+$requisicion_creada = false;
+$error_mensaje = '';
+$dashboard_redireccionar = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $datos = [
+            'id_area' => $_POST['id_area'] ?? $usuario['idArea'],
+            'descripcion' => $_POST['descripcion'] ?? '',
+            'requiere_cotizacion' => 1,
+            'id_unidad' => $_POST['id_unidad'] ?? null,
+            'maquina' => $_POST['maquina'] ?? null,
+            'obra_ubicacion' => $_POST['obra_ubicacion'] ?? null
+        ];
+        
+        $resultado = $requisicionController->crearRequisicion($datos, $usuario['id']);
+        
+        if ($resultado) {
+            $requisicion_creada = true;
+            
+            // Determinar el dashboard según el rol
+            $rol = $usuario['cPuesto'] ?? 'solicitante';
+            switch ($rol) {
+                case 'admin':
+                    $dashboard_redireccionar = '../dashboard/admin.php';
+                    break;
+                case 'jefe_area':
+                    $dashboard_redireccionar = '../dashboard/jefe_area.php';
+                    break;
+                case 'jefe_mayor':
+                    $dashboard_redireccionar = '../dashboard/jefe_mayor.php';
+                    break;
+                case 'contaduria':
+                    $dashboard_redireccionar = '../dashboard/contaduria.php';
+                    break;
+                default:
+                    $dashboard_redireccionar = '../dashboard/solicitante.php';
+            }
+        } else {
+            $error_mensaje = 'Error al crear la requisición';
+        }
+    } catch (Exception $e) {
+        $error_mensaje = 'Error: ' . $e->getMessage();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -185,7 +232,7 @@ foreach ($areas as $area) {
     <div class="container">
         <h1>Nueva Requisición</h1>
 
-        <form id="formRequisicion" method="POST">
+        <form id="formRequisicion" method="POST" action="">
             <!-- Información automática -->
             <div class="form-group">
                 <label>Solicitante</label>
@@ -309,34 +356,28 @@ foreach ($areas as $area) {
             document.getElementById('modalButtons').style.display = 'none';
             document.getElementById('loadingSpinner').style.display = 'block';
 
-            fetch('/ProyectoPHP/frontend/services/crear_requisicion_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    cerrarModal();
-                    alert('¡Requisición creada correctamente!');
-                    setTimeout(() => {
-                        window.location.href = './listar.php';
-                    }, 1500);
-                } else {
-                    cerrarModal();
-                    alert('Error: ' + data.mensaje);
-                    console.error('Error:', data);
-                }
-            })
-            .catch(error => {
-                cerrarModal();
-                alert('Error al enviar la requisición');
-                console.error('Error:', error);
-            });
+            // Enviar formulario por POST normal
+            form.submit();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             actualizarCamposPorArea();
         });
     </script>
+
+    <?php if ($requisicion_creada): ?>
+    <script>
+        // Redirigir automáticamente al dashboard después de 1.5 segundos
+        setTimeout(() => {
+            window.location.href = '<?php echo $dashboard_redireccionar; ?>';
+        }, 1500);
+    </script>
+    <?php endif; ?>
+
+    <?php if ($error_mensaje): ?>
+    <script>
+        alert('Error: <?php echo addslashes($error_mensaje); ?>');
+    </script>
+    <?php endif; ?>
 </body>
 </html>

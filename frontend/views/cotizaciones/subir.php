@@ -53,20 +53,42 @@ $mensaje = '';
 $error = '';
 
 // Procesar envío del formulario
-if ($_POST) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Validar campos requeridos
+        if (empty($_POST['proveedor'])) {
+            throw new Exception("El proveedor es requerido");
+        }
+        if (empty($_POST['dias_entrega'])) {
+            throw new Exception("El tiempo de entrega es requerido");
+        }
+        
         // Manejar subida de archivo
         $archivo_nombre = null;
         if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
-            $extension = pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION);
-            $archivo_nombre = 'cotizacion_' . $id_requisicion . '_' . time() . '.' . $extension;
+            // Validar que sea PDF
+            $extension = strtolower(pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION));
+            if ($extension !== 'pdf') {
+                throw new Exception("Solo se aceptan archivos PDF");
+            }
+            
+            // Validar tamaño (máx 5MB)
+            if ($_FILES['archivo']['size'] > 5 * 1024 * 1024) {
+                throw new Exception("El archivo no puede exceder 5MB");
+            }
+            
+            $archivo_nombre = 'cotizacion_' . $id_requisicion . '_' . time() . '.pdf';
             $ruta_destino = __DIR__ . '/../../../uploads/cotizaciones/' . $archivo_nombre;
             
-            if (move_uploaded_file($_FILES['archivo']['tmp_name'], $ruta_destino)) {
-                $archivo_nombre = 'cotizaciones/' . $archivo_nombre;
-            } else {
-                throw new Exception("Error al subir el archivo");
+            // Verificar que la carpeta existe
+            if (!is_dir(__DIR__ . '/../../../uploads/cotizaciones/')) {
+                mkdir(__DIR__ . '/../../../uploads/cotizaciones/', 0777, true);
             }
+            
+            if (!move_uploaded_file($_FILES['archivo']['tmp_name'], $ruta_destino)) {
+                throw new Exception("Error al subir el archivo. Verifica los permisos de la carpeta uploads/");
+            }
+            $archivo_nombre = 'cotizaciones/' . $archivo_nombre;
         }
 
         $datos = [
@@ -227,7 +249,7 @@ if ($_POST) {
             <strong>Área:</strong> <?php echo $requisicion['area_nombre']; ?>
         </div>
 
-        <form id="formCotizacion" enctype="multipart/form-data">
+        <form id="formCotizacion" method="POST" action="" enctype="multipart/form-data">
             <div class="form-group">
                   <label>Proveedor *</label>
                 <input type="text" name="proveedor" value="<?php echo ($cotizacion_actual && isset($cotizacion_actual['cProveedor'])) ? htmlspecialchars($cotizacion_actual['cProveedor']) : (isset($_POST['proveedor']) ? htmlspecialchars($_POST['proveedor']) : ''); ?>" 
@@ -259,67 +281,17 @@ if ($_POST) {
 
             <div class="form-group">
                 <label>Archivo (PDF)</label>
-                <input type="file" name="archivo" accept=".pdf,.PDF">
+                <input type="file" name="archivo">
                 <small style="color: #6b7280;">Formatos aceptados: PDF (Máx. 5MB)</small>
             </div>
 
             <div class="form-group">
-                <button type="button" class="btn" onclick="enviarCotizacion()">Subir Cotización</button>
+                <button type="submit" class="btn">Subir Cotización</button>
                 <button type="button" class="btn btn-secondary" onclick="history.back()">Cancelar</button>
             </div>
             
             <div id="mensaje-resultado" style="margin-top: 15px;"></div>
         </form>
     </div>
-
-    <script>
-        function enviarCotizacion() {
-            const form = document.getElementById('formCotizacion');
-            
-            // Validar el formulario
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            const btn = event.target;
-            const mensajeDiv = document.getElementById('mensaje-resultado');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
-            mensajeDiv.innerHTML = '';
-
-            // Crear FormData para enviar archivo
-            const formData = new FormData(form);
-            formData.append('id_requisicion', <?php echo $id_requisicion; ?>);
-            <?php if ($id_cotizacion): ?>
-            formData.append('id_cotizacion', <?php echo $id_cotizacion; ?>);
-            <?php endif; ?>
-
-            fetch('/ProyectoPHP/frontend/services/subir_cotizacion_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    mensajeDiv.innerHTML = '<div class="mensaje success"><i class="bi bi-check-circle"></i> ' + data.mensaje + '</div>';
-                    setTimeout(() => {
-                        window.location.href = './seguimiento.php?id_requisicion=<?php echo $id_requisicion; ?>';
-                    }, 1500);
-                } else {
-                    mensajeDiv.innerHTML = '<div class="mensaje error"><i class="bi bi-exclamation-circle"></i> Error: ' + data.mensaje + '</div>';
-                    btn.disabled = false;
-                    btn.innerHTML = 'Subir Cotización';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mensajeDiv.innerHTML = '<div class="mensaje error"><i class="bi bi-exclamation-circle"></i> Error en la solicitud</div>';
-                btn.disabled = false;
-                btn.innerHTML = 'Subir Cotización';
-            });
-        }
-    </script>
 </body>
 </html>

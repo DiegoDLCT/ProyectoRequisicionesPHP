@@ -127,12 +127,13 @@ $requisiciones = $aprobacionController->obtenerAprobacionesPendientes();
                                     <?php if (!empty($cotizacion['cArchivourl'])): ?>
                                         <?php
                                         $extension = strtolower(pathinfo($cotizacion['cArchivourl'], PATHINFO_EXTENSION));
+                                        $rutaArchivo = '/ProyectoPHP/uploads/' . htmlspecialchars($cotizacion['cArchivourl']);
                                         if ($extension === 'pdf'): ?>
-                                            <iframe src="<?php echo dirname(__DIR__, 2) . '/uploads/cotizaciones/' . htmlspecialchars($cotizacion['cArchivourl']) ?>"></iframe>
+                                            <iframe src="<?php echo $rutaArchivo ?>"></iframe>
                                         <?php elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])): ?>
-                                            <img src="<?php echo dirname(__DIR__, 2) . '/uploads/cotizaciones/' . htmlspecialchars($cotizacion['cArchivourl']) ?>" alt="Cotización <?php echo htmlspecialchars($cotizacion['cProveedor']) ?>">
+                                            <img src="<?php echo $rutaArchivo ?>" alt="Cotización <?php echo htmlspecialchars($cotizacion['cProveedor']) ?>">
                                         <?php else: ?>
-                                            <p style="padding: 20px; text-align: center;"><a href="<?php echo dirname(__DIR__, 2) . '/uploads/cotizaciones/' . htmlspecialchars($cotizacion['cArchivourl']) ?>" target="_blank" class="btn" style="display: inline-block;">Descargar archivo</a></p>
+                                            <p style="padding: 20px; text-align: center;"><a href="<?php echo $rutaArchivo ?>" target="_blank" class="btn" style="display: inline-block;">Descargar archivo</a></p>
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <p style="padding: 20px; text-align: center; color: #ef4444;">No hay archivo adjunto</p>

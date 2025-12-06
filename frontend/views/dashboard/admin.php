@@ -22,8 +22,11 @@ $db = (new Database())->getConnection();
 $stmt = $db->query("SELECT estado, COUNT(*) as count FROM requisiciones WHERE lActivo = 1 GROUP BY estado");
 $estadisticas_datos = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-// Obtener cotizaciones aprobadas
-$stmtCot = $db->query("SELECT COUNT(*) as total FROM cotizaciones WHERE bAprovada = 1");
+// Obtener cotizaciones aprobadas de requisiciones EN CURSO
+$stmtCot = $db->prepare("SELECT COUNT(*) as total FROM cotizaciones c 
+                         JOIN requisiciones r ON c.idRequisicion = r.id 
+                         WHERE c.bAprovada = 1 AND r.estado != 'entregado' AND r.lActivo = 1");
+$stmtCot->execute();
 $cotizacionesAprobadas = $stmtCot->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
 // Función para formatear rol
@@ -316,5 +319,52 @@ function formatearRol($rol) {
             </div>
         </div>
     </div>
+
+    <script>
+        // Verificar si hay estadísticas actualizadas desde requisicion creada
+        document.addEventListener('DOMContentLoaded', function() {
+            const estadisticasActualizadas = sessionStorage.getItem('estadisticas_actualizadas');
+            
+            if (estadisticasActualizadas) {
+                const estadisticas = JSON.parse(estadisticasActualizadas);
+                actualizarEstadisticasEnPantalla(estadisticas);
+                sessionStorage.removeItem('estadisticas_actualizadas');
+            }
+        });
+
+        function actualizarEstadisticasEnPantalla(estadisticas) {
+            // Mapeo de estados
+            const estadoLabels = {
+                'pendiente': 0,
+                'cotizado': 1,
+                'pago_solicitado': 2,
+                'pagado': 3,
+                'por_entregar': 4,
+                'entregado': 5,
+                'cotizaciones_aprobadas': 6
+            };
+
+            const statCards = document.querySelectorAll('.stat-card');
+            let index = 0;
+
+            for (const [estado, cantidad] of Object.entries(estadisticas)) {
+                if (estadoLabels.hasOwnProperty(estado) && estadoLabels[estado] < statCards.length) {
+                    const cardIndex = estadoLabels[estado];
+                    if (cardIndex < statCards.length) {
+                        const statValue = statCards[cardIndex].querySelector('.stat-value');
+                        if (statValue) {
+                            statValue.textContent = cantidad;
+                            // Animación de actualización
+                            statValue.style.transition = 'all 0.3s ease';
+                            statValue.style.color = '#10b981';
+                            setTimeout(() => {
+                                statValue.style.color = 'var(--dark)';
+                            }, 1500);
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </body>
 </html>

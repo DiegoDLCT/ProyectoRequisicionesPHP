@@ -20,6 +20,22 @@ if (tieneRol('admin') || tieneRol('jefe_mayor')) {
     $requisiciones = $requisicionController->obtenerRequisicionesUsuario($usuario['id']);
 }
 
+// Paginación
+$registrosPorPagina = 10;
+$totalRegistros = count($requisiciones);
+$totalPaginas = ceil($totalRegistros / $registrosPorPagina);
+$paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+
+// Validar página
+if ($paginaActual < 1) $paginaActual = 1;
+if ($paginaActual > $totalPaginas && $totalPaginas > 0) $paginaActual = $totalPaginas;
+
+// Calcular offset
+$offset = ($paginaActual - 1) * $registrosPorPagina;
+
+// Obtener requisiciones para la página actual
+$requisicionesPagina = array_slice($requisiciones, $offset, $registrosPorPagina);
+
 $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('contaduria');
 ?>
 <!DOCTYPE html>
@@ -159,7 +175,7 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($requisiciones as $req): ?>
+                    <?php foreach ($requisicionesPagina as $req): ?>
                     <tr>
                         <td><strong><?php echo $req['cFolio']; ?></strong></td>
                         <td><?php echo $req['dFechaSolicitud']; ?></td>
@@ -201,8 +217,55 @@ $esUsuarioNormal = !tieneRol('admin') && !tieneRol('jefe_mayor') && !tieneRol('c
                     
             </table>
             
+            <!-- Paginación -->
+            <?php if ($totalPaginas > 1): ?>
+            <div style="margin-top: 30px; display: flex; justify-content: center; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <?php if ($paginaActual > 1): ?>
+                    <a href="?pagina=1" class="btn" style="background: #6b7280; padding: 8px 12px; font-size: 12px;">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                    <a href="?pagina=<?php echo $paginaActual - 1; ?>" class="btn" style="background: #6b7280; padding: 8px 12px; font-size: 12px;">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                <?php endif; ?>
+                
+                <div style="display: flex; gap: 5px;">
+                    <?php 
+                    // Mostrar números de página (máximo 5 visibles)
+                    $rango = 2;
+                    $inicio = max(1, $paginaActual - $rango);
+                    $fin = min($totalPaginas, $paginaActual + $rango);
+                    
+                    if ($inicio > 1) echo '<span style="color: #6b7280;">...</span>';
+                    
+                    for ($i = $inicio; $i <= $fin; $i++): 
+                        $estaActiva = $i === $paginaActual;
+                    ?>
+                        <a href="?pagina=<?php echo $i; ?>" class="btn" style="<?php echo $estaActiva ? 'background: #2563eb;' : 'background: #e5e7eb; color: #374151;'; ?> padding: 8px 12px; font-size: 12px; text-decoration: none;">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($fin < $totalPaginas) echo '<span style="color: #6b7280;">...</span>'; ?>
+                </div>
+                
+                <?php if ($paginaActual < $totalPaginas): ?>
+                    <a href="?pagina=<?php echo $paginaActual + 1; ?>" class="btn" style="background: #6b7280; padding: 8px 12px; font-size: 12px;">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="?pagina=<?php echo $totalPaginas; ?>" class="btn" style="background: #6b7280; padding: 8px 12px; font-size: 12px;">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                <?php endif; ?>
+                
+                <span style="color: #6b7280; font-size: 14px;">
+                    Página <?php echo $paginaActual; ?> de <?php echo $totalPaginas; ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
             <div style="margin-top: 20px; color: #6b7280; font-size: 14px;">
-                Total: <?php echo count($requisiciones); ?> requisiciones
+                Total: <?php echo $totalRegistros; ?> requisiciones | Mostrando: <?php echo count($requisicionesPagina); ?> por página
             </div>
         <?php endif; ?>
     </div>
